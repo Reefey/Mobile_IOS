@@ -1,6 +1,12 @@
+//
+//  CollectionDetailView.swift
+//  Reefey
+//
+//  Created by Reza Juliandri on 23/08/25.
+//
+
 import SwiftUI
 
-// MARK: - Collection Detail View
 struct CollectionDetailView: View {
     let collection: Collection
     @State private var selectedTab = 0
@@ -8,24 +14,25 @@ struct CollectionDetailView: View {
     @State private var selectedImageIndex = 0
     
     var body: some View {
-        GeometryReader { geometry in
-            VStack(spacing: 0) {
-                // Header with main image
-                headerSection
-                    .frame(height: min(geometry.size.height * 0.4, 300))
-
-                // Tab selection
-                tabSelectionView
-                
-                // Content based on selected tab
-                if selectedTab == 0 {
-                    collectionGalleryView
-                } else {
-                    infoView
-                }
-                
-                Spacer()
+        VStack(spacing: 0) {
+            // Header image
+            headerImage
+                .frame(height: 300)
+            
+            // Tab selection
+            tabSelectionView
+                .padding(.horizontal, 20)
+                .padding(.vertical, 15)
+                .background(.ultraThinMaterial)
+            
+            // Content based on selected tab
+            if selectedTab == 0 {
+                photosGridView
+            } else {
+                infoView
             }
+            
+            Spacer()
         }
         .navigationTitle(collection.species)
         .navigationBarTitleDisplayMode(.inline)
@@ -46,10 +53,9 @@ struct CollectionDetailView: View {
         }
     }
     
-    private var headerSection: some View {
-        ZStack {
-                            // Main header image
-                if let imageURL = collection.marineImageUrl {
+    private var headerImage: some View {
+        Group {
+            if let imageURL = collection.marineImageUrl, !imageURL.isEmpty {
                 AsyncImage(url: URL(string: imageURL)) { image in
                     image
                         .resizable()
@@ -59,201 +65,139 @@ struct CollectionDetailView: View {
                         .resizable()
                         .scaledToFill()
                 }
-                .clipped()
             } else {
                 Image("tuna")
                     .resizable()
                     .scaledToFill()
-                    .clipped()
-            }
-            
-            // Gradient overlay
-            LinearGradient(
-                gradient: Gradient(colors: [Color.clear, Color.black.opacity(0.6)]),
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            
-            // Collection info overlay
-            VStack {
-                Spacer()
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(collection.species)
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundColor(.white)
-                        
-                        Text(collection.scientificName)
-                            .font(.caption)
-                            .foregroundColor(.white.opacity(0.8))
-                            .italic()
-                    }
-                    
-                    Spacer()
-                    
-                    VStack(alignment: .trailing, spacing: 4) {
-                        Text("\(collection.totalPhotos) photos")
-                            .font(.caption)
-                            .foregroundColor(.white.opacity(0.8))
-                        
-                        Text(collection.firstSeenDate?.formatted(date: .abbreviated, time: .omitted) ?? collection.firstSeen)
-                            .font(.caption)
-                            .foregroundColor(.white.opacity(0.8))
-                    }
-                }
-                .padding()
             }
         }
+        .clipped()
+        .ignoresSafeArea(edges: .top)
     }
     
     private var tabSelectionView: some View {
-        HStack(spacing: 0) {
-            TabButton(
-                title: "Photos",
-                isSelected: selectedTab == 0,
-                action: { withAnimation(.easeInOut(duration: 0.2)) { selectedTab = 0 } }
-            )
+        HStack {
+            Spacer()
+                .frame(width: 40)
             
-            TabButton(
-                title: "Info",
-                isSelected: selectedTab == 1,
-                action: { withAnimation(.easeInOut(duration: 0.2)) { selectedTab = 1 } }
-            )
+            VStack {
+                Text("Photos")
+                    .fontWeight(.bold)
+                    .padding(.bottom, 10)
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 3)
+                            .foregroundColor(selectedTab == 0 ? Color(hex: "#0FAAAC") : .clear),
+                        alignment: .bottom
+                    )
+                    .onTapGesture {
+                        selectedTab = 0
+                    }
+            }
+            
+            Spacer()
+            
+            VStack {
+                Text("Info")
+                    .fontWeight(.bold)
+                    .padding(.bottom, 10)
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 3)
+                            .foregroundColor(selectedTab == 1 ? Color(hex: "#0FAAAC") : .clear),
+                        alignment: .bottom
+                    )
+                    .onTapGesture {
+                        selectedTab = 1
+                    }
+            }
+            
+            Spacer()
+                .frame(width: 40)
         }
-        .padding(.horizontal, 20)
-        .background(.ultraThinMaterial)
     }
     
-    private var collectionGalleryView: some View {
-        ScrollView {
-            LazyVGrid(
-                columns: Array(repeating: GridItem(.flexible(), spacing: 2), count: 3),
-                spacing: 2
-            ) {
-                ForEach(collection.photos.indices, id: \.self) { index in
-                    CollectionPhotoView(photo: collection.photos[index])
+    private var photosGridView: some View {
+        GeometryReader { geometry in
+            let itemSize = (geometry.size.width - 4) / 3
+            
+            if collection.photos.isEmpty {
+                VStack {
+                    Spacer()
+                    Text("No photos available")
+                        .foregroundColor(.gray)
+                    Spacer()
+                }
+            } else {
+                LazyVGrid(columns: [
+                    GridItem(.fixed(itemSize), spacing: 2),
+                    GridItem(.fixed(itemSize), spacing: 2),
+                    GridItem(.fixed(itemSize), spacing: 2)
+                ], spacing: 2) {
+                    ForEach(Array(collection.photos.enumerated()), id: \.element.id) { index, photo in
+                        AsyncImage(url: URL(string: photo.url)) { image in
+                            image
+                                .resizable()
+                                .scaledToFill()
+                        } placeholder: {
+                            Image("tuna")
+                                .resizable()
+                                .scaledToFill()
+                        }
+                        .frame(width: itemSize, height: itemSize)
+                        .clipped()
+                        .cornerRadius(0)
                         .onTapGesture {
                             selectedImageIndex = index
                             showingImageDetail = true
                         }
+                    }
                 }
             }
-            .padding(.horizontal, 2)
-            .padding(.top, 2)
-        }
-        .background(Color(UIColor.systemBackground))
-    }
-    
-    private var sizeText: String {
-        if let minSize = collection.sizeMinCm, let maxSize = collection.sizeMaxCm {
-            if minSize == maxSize {
-                return "\(Int(minSize)) cm"
-            } else {
-                return "\(Int(minSize))-\(Int(maxSize)) cm"
-            }
-        } else {
-            return "Unknown"
         }
     }
     
-    @ViewBuilder
     private var infoView: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                // Basic Information
+            VStack(alignment: .leading, spacing: 20) {
                 InfoSectionView(title: "Basic Information", content: [
+                    ("Species", collection.species),
                     ("Scientific Name", collection.scientificName),
-                    ("Category", "Marine Species"),
-                    ("Rarity", "\(collection.rarity)"),
-                    ("Size", sizeText),
-                    ("Diet", collection.diet ?? "Unknown"),
-                    ("Behavior", collection.behavior ?? "Unknown")
-                ])
-                
-                // Habitat Information
-                InfoSectionView(title: "Habitat", content: [
-                    ("Habitat Type", collection.habitatType.joined(separator: ", ")),
-                    ("Description", collection.description)
-                ])
-                
-                // Sightings
-                InfoSectionView(title: "Sightings", content: [
-                    ("Total Photos", "\(collection.totalPhotos)"),
-                                    ("First Seen", collection.firstSeenDate?.formatted(date: .abbreviated, time: .omitted) ?? collection.firstSeen),
-                ("Last Seen", collection.lastSeenDate?.formatted(date: .abbreviated, time: .omitted) ?? collection.lastSeen),
+                    ("Rarity", "\(collection.rarity)/5"),
                     ("Status", collection.status)
                 ])
-            }
-            .padding(20)
-        }
-        .background(Color(UIColor.systemBackground))
-    }
-    
-}
-
-// MARK: - Supporting Views
-struct TabButton: View {
-    let title: String
-    let isSelected: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 10) {
-                Text(title)
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(isSelected ? .primary : .secondary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
                 
-                Rectangle()
-                    .frame(height: 2)
-                    .foregroundColor(isSelected ? Color.teal : Color.clear)
-                    .animation(.easeInOut(duration: 0.2), value: isSelected)
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
-    }
-}
-
-struct CollectionPhotoView: View {
-    let photo: CollectionPhoto
-    
-    var body: some View {
-        Group {
-            AsyncImage(url: URL(string: photo.url)) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } placeholder: {
-                photoPlaceholder
-            }
-        }
-        .aspectRatio(1, contentMode: .fit)
-        .clipped()
-        .background(Color.gray.opacity(0.1))
-    }
-    
-    private var photoPlaceholder: some View {
-        Rectangle()
-            .fill(Color.gray.opacity(0.2))
-            .overlay(
-                VStack(spacing: 4) {
-                    Image(systemName: "photo")
-                        .font(.system(size: 24))
-                        .foregroundColor(.gray)
-                    
-                    Text(photo.dateFoundDate?.formatted(date: .abbreviated, time: .omitted) ?? photo.dateFound)
-                        .font(.caption2)
-                        .foregroundColor(.gray)
-                        .lineLimit(2)
-                        .multilineTextAlignment(.center)
-                        .minimumScaleFactor(0.7)
+                if let minSize = collection.sizeMinCm, let maxSize = collection.sizeMaxCm {
+                    InfoSectionView(title: "Size", content: [
+                        ("Size Range", "\(Int(minSize))-\(Int(maxSize)) cm")
+                    ])
                 }
-                .padding(4)
-            )
+                
+                // var behaviorContent: [(String, String)] = []
+                // if let diet = collection.diet { behaviorContent.append(("Diet", diet)) }
+                // if let behavior = collection.behavior { behaviorContent.append(("Behavior", behavior)) }
+                // if !behaviorContent.isEmpty {
+                //     InfoSectionView(title: "Behavior & Diet", content: behaviorContent)
+                // }
+                
+                if !collection.habitatType.isEmpty {
+                    InfoSectionView(title: "Habitat", content: [
+                        ("Habitat Type", collection.habitatType.joined(separator: ", "))
+                    ])
+                }
+                
+                InfoSectionView(title: "Description", content: [
+                    ("Details", collection.description)
+                ])
+                
+                InfoSectionView(title: "Sightings", content: [
+                    ("Total Photos", "\(collection.totalPhotos)"),
+                    ("First Seen", collection.firstSeenDate?.formatted(date: .abbreviated, time: .omitted) ?? collection.firstSeen),
+                    ("Last Seen", collection.lastSeenDate?.formatted(date: .abbreviated, time: .omitted) ?? collection.lastSeen)
+                ])
+            }
+            .padding()
+        }
     }
 }
 
@@ -264,19 +208,20 @@ struct InfoSectionView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(title)
-                .font(.system(size: 18, weight: .semibold))
+                .font(.headline)
+                .fontWeight(.semibold)
                 .foregroundColor(.primary)
             
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(spacing: 8) {
                 ForEach(content, id: \.0) { item in
-                    HStack(alignment: .top) {
+                    HStack {
                         Text(item.0)
-                            .font(.system(size: 14, weight: .medium))
+                            .font(.subheadline)
                             .foregroundColor(.secondary)
-                            .frame(width: 120, alignment: .leading)
+                            .frame(width: 100, alignment: .leading)
                         
                         Text(item.1)
-                            .font(.system(size: 14))
+                            .font(.subheadline)
                             .foregroundColor(.primary)
                             .multilineTextAlignment(.leading)
                         
@@ -284,10 +229,10 @@ struct InfoSectionView: View {
                     }
                 }
             }
-            .padding()
-            .background(Color(.systemGray6))
-            .cornerRadius(8)
         }
+        .padding()
+        .background(Color(.systemGray6))
+        .cornerRadius(12)
     }
 }
 
@@ -297,38 +242,38 @@ struct ImageDetailView: View {
     @Binding var isPresented: Bool
     
     var body: some View {
-        ZStack {
-            TabView(selection: $selectedIndex) {
-                ForEach(photos.indices, id: \.self) { index in
-                    ZStack {
-                        AsyncImage(url: URL(string: photos[index].url)) { image in
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .padding()
-                        } placeholder: {
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+        NavigationView {
+            GeometryReader { geometry in
+                VStack {
+                    if !photos.isEmpty {
+                        TabView(selection: $selectedIndex) {
+                            ForEach(Array(photos.enumerated()), id: \.element.id) { index, photo in
+                                AsyncImage(url: URL(string: photo.url)) { image in
+                                    image
+                                        .resizable()
+                                        .scaledToFit()
+                                } placeholder: {
+                                    ProgressView()
+                                }
+                                .tag(index)
+                            }
                         }
+                        .tabViewStyle(PageTabViewStyle(indexDisplayMode: .automatic))
+                    } else {
+                        Text("No photos available")
+                            .foregroundColor(.gray)
                     }
-                    .tag(index)
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .tabViewStyle(PageTabViewStyle(indexDisplayMode: .automatic))
-            
-            // Navigation overlay
-            VStack {
-                HStack {
+            .navigationTitle("Photo \(selectedIndex + 1) of \(photos.count)")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
                         isPresented = false
                     }
-                    .foregroundColor(.white)
-                    .font(.system(size: 17, weight: .medium))
-                    .padding()
-                    
-                    Spacer()
                 }
-                Spacer()
             }
         }
     }
@@ -337,37 +282,37 @@ struct ImageDetailView: View {
 
 
 #Preview {
-    let sampleCollection = Collection(
-        id: 1,
-        deviceId: "device123",
-        marineId: 123,
-        species: "Clownfish",
-        scientificName: "Amphiprion ocellaris",
-        rarity: 2,
-        sizeMinCm: 6.0,
-        sizeMaxCm: 11.0,
-        habitatType: ["Coral Reefs", "Anemones"],
-        diet: "Omnivore",
-        behavior: "Social",
-        description: "The iconic clownfish, known for its bright orange color with white stripes.",
-        marineImageUrl: nil,
-        photos: [
-            CollectionPhoto(
-                id: 1,
-                url: "https://example.com/photo1.jpg",
-                annotatedUrl: nil,
-                dateFound: "2025-08-25T07:24:24.45+00:00",
-                spotId: 1,
-                confidence: 0.95,
-                boundingBox: nil,
-                spots: nil
-            )
-        ],
-        totalPhotos: 1,
-                        firstSeen: "2025-08-25T07:24:24.367+00:00",
-                lastSeen: "2025-08-25T07:24:24.367+00:00",
-        status: "identified"
-    )
-    
-    CollectionDetailView(collection: sampleCollection)
+    NavigationView {
+        CollectionDetailView(collection: Collection(
+            id: 1,
+            deviceId: "test-device",
+            marineId: 60,
+            species: "Bluefin Tuna",
+            scientificName: "Thunnus thynnus",
+            rarity: 3,
+            sizeMinCm: 200.0,
+            sizeMaxCm: 400.0,
+            habitatType: ["Open Ocean", "Deep Water"],
+            diet: "Fish and squid",
+            behavior: "Fast swimming predator",
+            description: "AI-identified as Bluefin Tuna (Thunnus thynnus)",
+            marineImageUrl: nil,
+            photos: [
+                CollectionPhoto(
+                    id: 1,
+                    url: "https://example.com/photo1.jpg",
+                    annotatedUrl: nil,
+                    dateFound: "2025-08-25T07:24:24.45+00:00",
+                    spotId: 1,
+                    confidence: 0.95,
+                    boundingBox: BoundingBox(x: 0.25, y: 0.35, width: 0.45, height: 0.3),
+                    spots: nil
+                )
+            ],
+            totalPhotos: 1,
+            firstSeen: "2025-08-25T07:24:24.367+00:00",
+            lastSeen: "2025-08-25T07:24:24.367+00:00",
+            status: "identified"
+        ))
+    }
 }
