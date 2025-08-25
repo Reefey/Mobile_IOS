@@ -27,10 +27,8 @@ struct CollectionDetailView: View {
                 } else {
                     infoView
                 }
-                
-                Spacer()
             }
-            .ignoresSafeArea(edges: .top)
+            .ignoresSafeArea()
         }
         .navigationBarHidden(true)
         .fullScreenCover(isPresented: $showingImageDetail) {
@@ -49,7 +47,7 @@ struct CollectionDetailView: View {
                 .resizable()
                 .scaledToFill()
                 .clipped()
-                .frame(minHeight: 200, maxHeight: 300)
+                .frame(maxHeight: 300)
         }
     }
     
@@ -70,43 +68,62 @@ struct CollectionDetailView: View {
     }
     
     private var tabSelectionView: some View {
-        HStack(spacing: 0) {
-            TabButton(
-                title: "Collection",
-                isSelected: selectedTab == 0,
-                action: { withAnimation(.easeInOut(duration: 0.2)) { selectedTab = 0 } }
-            )
-            
+        VStack {
             if infoSections != nil {
-                TabButton(
-                    title: "Info",
-                    isSelected: selectedTab == 1,
-                    action: { withAnimation(.easeInOut(duration: 0.2)) { selectedTab = 1 } }
-                )
+                Picker("Tab Selection", selection: $selectedTab) {
+                    Text("Collection").tag(0)
+                    Text("Info").tag(1)
+                }
+                .pickerStyle(SegmentedPickerStyle())
+                .onAppear {
+                            // Change the selected segment background color
+                    UISegmentedControl.appearance().selectedSegmentTintColor = UIColor(Color(hex: "#0FAAAC"))
+                            // Optionally change the overall background
+                    UISegmentedControl.appearance().backgroundColor = UIColor(Color(hex: "#  e0fffb"))
+                            
+                            // Change text colors
+                            UISegmentedControl.appearance().setTitleTextAttributes([
+                                .foregroundColor: UIColor.label
+                            ], for: .normal)
+                            UISegmentedControl.appearance().setTitleTextAttributes([
+                                .foregroundColor: UIColor.white
+                            ], for: .selected)
+                        }
+                .padding(.horizontal, 20)
+            } else {
+                // Show just a title when there's only one tab
+                Text("Collection")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.primary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
             }
-        }
-        .padding(.horizontal, 20)
-        .background(.ultraThinMaterial)
+        }.padding()
     }
     
     private var collectionGalleryView: some View {
-        ScrollView {
-            LazyVGrid(
-                columns: Array(repeating: GridItem(.flexible(), spacing: 2), count: 3),
-                spacing: 2
-            ) {
-                ForEach(items.indices, id: \.self) { index in
-                    CollectionItemView(item: items[index])
-                        .onTapGesture {
-                            selectedImageIndex = index
-                            showingImageDetail = true
-                        }
+        Group {
+            Spacer()
+            ScrollView {
+                LazyVGrid(
+                    columns: Array(repeating: GridItem(.flexible(), spacing: 2), count: 3),
+                    spacing: 2
+                ) {
+                    ForEach(items.indices, id: \.self) { index in
+                        CollectionItemView(item: items[index])
+                            .onTapGesture {
+                                selectedImageIndex = index
+                                showingImageDetail = true
+                            }
+                    }
                 }
+                .padding(.horizontal, 2)
+                .padding(.top, 2)
             }
-            .padding(.horizontal, 2)
-            .padding(.top, 2)
+            .background(Color(UIColor.systemBackground))
+            Spacer()
         }
-        .background(Color(UIColor.systemBackground))
+        
     }
     
     @ViewBuilder
@@ -129,28 +146,6 @@ struct CollectionDetailView: View {
 }
 
 // MARK: - Supporting Views
-struct TabButton: View {
-    let title: String
-    let isSelected: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 10) {
-                Text(title)
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(isSelected ? .primary : .secondary)
-                
-                Rectangle()
-                    .frame(height: 2)
-                    .foregroundColor(isSelected ? Color.teal : Color.clear)
-                    .animation(.easeInOut(duration: 0.2), value: isSelected)
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
-    }
-}
 
 struct CollectionItemView: View {
     let item: CollectionItem

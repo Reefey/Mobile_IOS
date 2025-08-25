@@ -30,39 +30,6 @@ struct CollectionGridView: View {
                                     }.padding(10)
                                     Spacer()
                                 }
-                                VStack {
-                                    Spacer()
-                                    HStack {
-                                        HStack(spacing: 3) {
-                                            Image(systemName: "questionmark.circle.fill")
-                                                .resizable()
-                                                .scaledToFit()
-                                                .foregroundStyle(Color(hex: "#CE5656"))
-                                                .frame(width: 15, height: 15)
-                                            Image(systemName: "questionmark.circle.fill")
-                                                .resizable()
-                                                .scaledToFit()
-                                                .foregroundStyle(Color(hex: "#D89F65"))
-                                                .frame(width: 15, height: 15)
-                                            Image(systemName: "questionmark.circle.fill")
-                                                .resizable()
-                                                .scaledToFit()
-                                                .foregroundStyle(Color(hex: "#61C361"))
-                                                .frame(width: 15, height: 15)
-                                            Image(systemName: "questionmark.circle.fill")
-                                                .resizable()
-                                                .scaledToFit()
-                                                .foregroundStyle(Color(hex: "#9948C2"))
-                                                .frame(width: 15, height: 15)
-                                        }
-                                        .padding(.vertical, 10)
-                                        .padding(.horizontal, 10)
-                                        .background(.ultraThinMaterial.opacity(0.5))
-                                        .cornerRadius(20)
-                                        Spacer()
-                                    }
-                                    
-                                }
                             }
                             .background(Color.gray.opacity(0.1))
                             .cornerRadius(20)
