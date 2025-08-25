@@ -75,6 +75,20 @@ struct CollectionDetailView: View {
                     Text("Info").tag(1)
                 }
                 .pickerStyle(SegmentedPickerStyle())
+                .onAppear {
+                            // Change the selected segment background color
+                    UISegmentedControl.appearance().selectedSegmentTintColor = UIColor(Color(hex: "#0FAAAC"))
+                            // Optionally change the overall background
+                    UISegmentedControl.appearance().backgroundColor = UIColor(Color(hex: "#  e0fffb"))
+                            
+                            // Change text colors
+                            UISegmentedControl.appearance().setTitleTextAttributes([
+                                .foregroundColor: UIColor.label
+                            ], for: .normal)
+                            UISegmentedControl.appearance().setTitleTextAttributes([
+                                .foregroundColor: UIColor.white
+                            ], for: .selected)
+                        }
                 .padding(.horizontal, 20)
             } else {
                 // Show just a title when there's only one tab
