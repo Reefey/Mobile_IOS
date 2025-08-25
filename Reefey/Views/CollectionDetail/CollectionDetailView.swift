@@ -2,21 +2,17 @@ import SwiftUI
 
 // MARK: - Collection Detail View
 struct CollectionDetailView: View {
-    let title: String
-    let headerImage: String?
-    let items: [CollectionItem]
-    let infoSections: [InfoSection]?
-    @Environment(\.dismiss) private var dismiss
-    
+    let collection: Collection
     @State private var selectedTab = 0
     @State private var showingImageDetail = false
     @State private var selectedImageIndex = 0
     
     var body: some View {
-        ZStack {
+        GeometryReader { geometry in
             VStack(spacing: 0) {
                 // Header with main image
                 headerSection
+                    .frame(height: min(geometry.size.height * 0.4, 300))
 
                 // Tab selection
                 tabSelectionView
@@ -30,12 +26,20 @@ struct CollectionDetailView: View {
                 
                 Spacer()
             }
-            .ignoresSafeArea(edges: .top)
         }
-        .navigationBarHidden(true)
+        .navigationTitle(collection.species)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button("Back") {
+                    // Navigation will be handled by NavigationStack
+                }
+                .foregroundColor(.primary)
+            }
+        }
         .fullScreenCover(isPresented: $showingImageDetail) {
             ImageDetailView(
-                items: items,
+                photos: collection.photos,
                 selectedIndex: $selectedImageIndex,
                 isPresented: $showingImageDetail
             )
@@ -44,46 +48,78 @@ struct CollectionDetailView: View {
     
     private var headerSection: some View {
         ZStack {
-            // Main header image
-            Image("tuna")
-                .resizable()
-                .scaledToFill()
+                            // Main header image
+                if let imageURL = collection.marineImageUrl {
+                AsyncImage(url: URL(string: imageURL)) { image in
+                    image
+                        .resizable()
+                        .scaledToFill()
+                } placeholder: {
+                    Image("tuna")
+                        .resizable()
+                        .scaledToFill()
+                }
                 .clipped()
-                .frame(minHeight: 200, maxHeight: 300)
-        }
-    }
-    
-    private var headerPlaceholder: some View {
-        Rectangle()
-            .fill(
-                LinearGradient(
-                    colors: [.gray.opacity(0.4), .gray.opacity(0.2)],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            )
-            .overlay(
+            } else {
                 Image("tuna")
-                    .font(.system(size: 60))
-                    .foregroundColor(.white.opacity(0.6))
+                    .resizable()
+                    .scaledToFill()
+                    .clipped()
+            }
+            
+            // Gradient overlay
+            LinearGradient(
+                gradient: Gradient(colors: [Color.clear, Color.black.opacity(0.6)]),
+                startPoint: .top,
+                endPoint: .bottom
             )
+            
+            // Collection info overlay
+            VStack {
+                Spacer()
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(collection.species)
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
+                        
+                        Text(collection.scientificName)
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.8))
+                            .italic()
+                    }
+                    
+                    Spacer()
+                    
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Text("\(collection.totalPhotos) photos")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.8))
+                        
+                        Text(collection.firstSeenDate?.formatted(date: .abbreviated, time: .omitted) ?? collection.firstSeen)
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.8))
+                    }
+                }
+                .padding()
+            }
+        }
     }
     
     private var tabSelectionView: some View {
         HStack(spacing: 0) {
             TabButton(
-                title: "Collection",
+                title: "Photos",
                 isSelected: selectedTab == 0,
                 action: { withAnimation(.easeInOut(duration: 0.2)) { selectedTab = 0 } }
             )
             
-            if infoSections != nil {
-                TabButton(
-                    title: "Info",
-                    isSelected: selectedTab == 1,
-                    action: { withAnimation(.easeInOut(duration: 0.2)) { selectedTab = 1 } }
-                )
-            }
+            TabButton(
+                title: "Info",
+                isSelected: selectedTab == 1,
+                action: { withAnimation(.easeInOut(duration: 0.2)) { selectedTab = 1 } }
+            )
         }
         .padding(.horizontal, 20)
         .background(.ultraThinMaterial)
@@ -95,8 +131,8 @@ struct CollectionDetailView: View {
                 columns: Array(repeating: GridItem(.flexible(), spacing: 2), count: 3),
                 spacing: 2
             ) {
-                ForEach(items.indices, id: \.self) { index in
-                    CollectionItemView(item: items[index])
+                ForEach(collection.photos.indices, id: \.self) { index in
+                    CollectionPhotoView(photo: collection.photos[index])
                         .onTapGesture {
                             selectedImageIndex = index
                             showingImageDetail = true
@@ -109,21 +145,49 @@ struct CollectionDetailView: View {
         .background(Color(UIColor.systemBackground))
     }
     
+    private var sizeText: String {
+        if let minSize = collection.sizeMinCm, let maxSize = collection.sizeMaxCm {
+            if minSize == maxSize {
+                return "\(Int(minSize)) cm"
+            } else {
+                return "\(Int(minSize))-\(Int(maxSize)) cm"
+            }
+        } else {
+            return "Unknown"
+        }
+    }
+    
     @ViewBuilder
     private var infoView: some View {
-        if let infoSections = infoSections {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
-                    ForEach(infoSections) { section in
-                        InfoSectionView(section: section)
-                    }
-                }
-                .padding(20)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                // Basic Information
+                InfoSectionView(title: "Basic Information", content: [
+                    ("Scientific Name", collection.scientificName),
+                    ("Category", "Marine Species"),
+                    ("Rarity", "\(collection.rarity)"),
+                    ("Size", sizeText),
+                    ("Diet", collection.diet ?? "Unknown"),
+                    ("Behavior", collection.behavior ?? "Unknown")
+                ])
+                
+                // Habitat Information
+                InfoSectionView(title: "Habitat", content: [
+                    ("Habitat Type", collection.habitatType.joined(separator: ", ")),
+                    ("Description", collection.description)
+                ])
+                
+                // Sightings
+                InfoSectionView(title: "Sightings", content: [
+                    ("Total Photos", "\(collection.totalPhotos)"),
+                                    ("First Seen", collection.firstSeenDate?.formatted(date: .abbreviated, time: .omitted) ?? collection.firstSeen),
+                ("Last Seen", collection.lastSeenDate?.formatted(date: .abbreviated, time: .omitted) ?? collection.lastSeen),
+                    ("Status", collection.status)
+                ])
             }
-            .background(Color(UIColor.systemBackground))
-        } else {
-            EmptyView()
+            .padding(20)
         }
+        .background(Color(UIColor.systemBackground))
     }
     
 }
@@ -140,6 +204,8 @@ struct TabButton: View {
                 Text(title)
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(isSelected ? .primary : .secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
                 
                 Rectangle()
                     .frame(height: 2)
@@ -152,21 +218,17 @@ struct TabButton: View {
     }
 }
 
-struct CollectionItemView: View {
-    let item: CollectionItem
+struct CollectionPhotoView: View {
+    let photo: CollectionPhoto
     
     var body: some View {
         Group {
-            if let imageURL = item.imageURL {
-                AsyncImage(url: URL(string: imageURL)) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    itemPlaceholder
-                }
-            } else {
-                itemPlaceholder
+            AsyncImage(url: URL(string: photo.url)) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } placeholder: {
+                photoPlaceholder
             }
         }
         .aspectRatio(1, contentMode: .fit)
@@ -174,7 +236,7 @@ struct CollectionItemView: View {
         .background(Color.gray.opacity(0.1))
     }
     
-    private var itemPlaceholder: some View {
+    private var photoPlaceholder: some View {
         Rectangle()
             .fill(Color.gray.opacity(0.2))
             .overlay(
@@ -183,75 +245,70 @@ struct CollectionItemView: View {
                         .font(.system(size: 24))
                         .foregroundColor(.gray)
                     
-                    if !item.title.isEmpty {
-                        Text(item.title)
-                            .font(.caption2)
-                            .foregroundColor(.gray)
-                            .lineLimit(1)
-                    }
+                    Text(photo.dateFoundDate?.formatted(date: .abbreviated, time: .omitted) ?? photo.dateFound)
+                        .font(.caption2)
+                        .foregroundColor(.gray)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.center)
+                        .minimumScaleFactor(0.7)
                 }
+                .padding(4)
             )
     }
 }
 
 struct InfoSectionView: View {
-    let section: InfoSection
+    let title: String
+    let content: [(String, String)]
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(section.title)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.secondary)
-                .textCase(.uppercase)
-                .tracking(0.5)
-            
-            Text(section.content)
-                .font(.system(size: 17))
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title)
+                .font(.system(size: 18, weight: .semibold))
                 .foregroundColor(.primary)
-                .lineLimit(nil)
             
-            if section != section { // Not the last item
-                Divider()
-                    .padding(.top, 8)
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(content, id: \.0) { item in
+                    HStack(alignment: .top) {
+                        Text(item.0)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.secondary)
+                            .frame(width: 120, alignment: .leading)
+                        
+                        Text(item.1)
+                            .font(.system(size: 14))
+                            .foregroundColor(.primary)
+                            .multilineTextAlignment(.leading)
+                        
+                        Spacer()
+                    }
+                }
             }
+            .padding()
+            .background(Color(.systemGray6))
+            .cornerRadius(8)
         }
     }
 }
 
 struct ImageDetailView: View {
-    let items: [CollectionItem]
+    let photos: [CollectionPhoto]
     @Binding var selectedIndex: Int
     @Binding var isPresented: Bool
     
     var body: some View {
         ZStack {
-            
             TabView(selection: $selectedIndex) {
-                ForEach(items.indices, id: \.self) { index in
+                ForEach(photos.indices, id: \.self) { index in
                     ZStack {
-                        if let imageURL = items[index].imageURL {
-                            AsyncImage(url: URL(string: imageURL)) { image in
-                                image
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                            } placeholder: {
-                                ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                            }
-                        } else {
-                            Rectangle()
-                                .fill(Color.gray.opacity(0.3))
-                                .overlay(
-                                    VStack(spacing: 12) {
-                                        Image(systemName: "photo")
-                                            .font(.system(size: 60))
-                                            .foregroundColor(.gray)
-                                        
-                                        Text(items[index].title.isEmpty ? "Image \(index + 1)" : items[index].title)
-                                            .foregroundColor(.white)
-                                            .font(.headline)
-                                    }
-                                )
+                        AsyncImage(url: URL(string: photos[index].url)) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .padding()
+                        } placeholder: {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
                         }
                     }
                     .tag(index)
@@ -277,58 +334,40 @@ struct ImageDetailView: View {
     }
 }
 
-// MARK: - Data Models
-struct CollectionItem: Identifiable, Equatable {
-    let id = UUID()
-    let title: String
-    let imageURL: String?
-    let metadata: [String: String]?
-    
-    init(title: String, imageURL: String? = nil, metadata: [String: String]? = nil) {
-        self.title = title
-        self.imageURL = imageURL
-        self.metadata = metadata
-    }
-}
 
-struct InfoSection: Identifiable, Equatable {
-    let id = UUID()
-    let title: String
-    let content: String
-    
-    init(title: String, content: String) {
-        self.title = title
-        self.content = content
-    }
-}
 
 #Preview {
-    var sampleTunaItems: [CollectionItem] {
-        Array(0...20).map { index in
-            CollectionItem(
-                title: "Tuna Catch \(index + 1)",
-                imageURL: nil, // Add your image URLs here
-                metadata: ["weight": "\(Int.random(in: 20...60)) kg"]
+    let sampleCollection = Collection(
+        id: 1,
+        deviceId: "device123",
+        marineId: 123,
+        species: "Clownfish",
+        scientificName: "Amphiprion ocellaris",
+        rarity: 2,
+        sizeMinCm: 6.0,
+        sizeMaxCm: 11.0,
+        habitatType: ["Coral Reefs", "Anemones"],
+        diet: "Omnivore",
+        behavior: "Social",
+        description: "The iconic clownfish, known for its bright orange color with white stripes.",
+        marineImageUrl: nil,
+        photos: [
+            CollectionPhoto(
+                id: 1,
+                url: "https://example.com/photo1.jpg",
+                annotatedUrl: nil,
+                dateFound: "2025-08-25T07:24:24.45+00:00",
+                spotId: 1,
+                confidence: 0.95,
+                boundingBox: nil,
+                spots: nil
             )
-        }
-    }
-    
-    var tunaInfoSections: [InfoSection] {
-        [
-            InfoSection(title: "Species", content: "Bluefin Tuna (Thunnus thynnus)"),
-            InfoSection(title: "Weight", content: "45.2 kg"),
-            InfoSection(title: "Length", content: "1.2 meters"),
-            InfoSection(title: "Location", content: "Pacific Ocean, 200 miles offshore"),
-            InfoSection(title: "Date Caught", content: "August 15, 2025"),
-            InfoSection(title: "Method", content: "Deep sea trolling"),
-            InfoSection(title: "Water Temperature", content: "18°C"),
-            InfoSection(title: "Depth", content: "150 meters")
-        ]
-    }
-    CollectionDetailView(
-        title: "Tuna",
-        headerImage: "nil", // Add your header image URL here
-        items: sampleTunaItems,
-        infoSections: tunaInfoSections
+        ],
+        totalPhotos: 1,
+                        firstSeen: "2025-08-25T07:24:24.367+00:00",
+                lastSeen: "2025-08-25T07:24:24.367+00:00",
+        status: "identified"
     )
+    
+    CollectionDetailView(collection: sampleCollection)
 }

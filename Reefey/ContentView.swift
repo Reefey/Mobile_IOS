@@ -8,8 +8,9 @@
 import SwiftUI
 import SwiftData
 
-enum NavigationPath: String {
-    case lockedCamera = "locked-camera"
+enum NavigationPath: Hashable {
+    case lockedCamera
+    case collectionDetail(Collection)
 }
 
 struct ContentView: View {
@@ -17,15 +18,31 @@ struct ContentView: View {
     @State var cameraShow: Bool = false
     
     var body: some View {
-        NavigationStack(path: $navigationPath) {
-            CollectionsView(path: $navigationPath, cameraShow: $cameraShow)
-                .navigationDestination(for: NavigationPath.self){ nav in
-                    switch nav {
-                    case .lockedCamera:
-                        CameraLockView(path: $navigationPath, cameraShow: $cameraShow)
+        // TabView {
+            // Collections Tab
+            NavigationStack(path: $navigationPath) {
+                CollectionsView(path: $navigationPath, cameraShow: $cameraShow)
+                    .navigationDestination(for: NavigationPath.self){ nav in
+                        switch nav {
+                        case .lockedCamera:
+                            CameraLockView(path: $navigationPath, cameraShow: $cameraShow)
+                        case .collectionDetail(let collection):
+                            CollectionDetailView(collection: collection)
+                        }
                     }
-                }
-        }
+            }
+            // .tabItem {
+            //     Image(systemName: "photo.stack")
+            //     Text("Collections")
+            // }
+            
+            // // Marine Species Tab
+            // MarineListView()
+            //     .tabItem {
+            //         Image(systemName: "fish")
+            //         Text("Marine Species")
+            //     }
+        // }
     }
 }
 

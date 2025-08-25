@@ -7,7 +7,7 @@
 
 enum CollectionCategoryEnum: String, CaseIterable {
     case ALL = "All"
-    case FISH = "Fish"
+    case FISHES = "Fishes"
     case CREATURES = "Creatures"
     case CORALS = "Corals"
     case UNKNOWN = "Unknown"
