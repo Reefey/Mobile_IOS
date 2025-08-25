@@ -36,28 +36,23 @@ struct CollectionListView: View {
                                 .resizable()
                                 .scaledToFit()
                                 .foregroundStyle(Color(hex: "#CE5656"))
-                                .frame(width: 40, height: 40)
+                                .frame(width: 30, height: 30)
                             Image(systemName: "questionmark.circle.fill")
                                 .resizable()
                                 .scaledToFit()
                                 .foregroundStyle(Color(hex: "#D89F65"))
-                                .frame(width: 40, height: 40)
+                                .frame(width: 30, height: 30)
                             Image(systemName: "questionmark.circle.fill")
                                 .resizable()
                                 .scaledToFit()
                                 .foregroundStyle(Color(hex: "#61C361"))
-                                .frame(width: 40, height: 40)
+                                .frame(width: 30, height: 30)
                             Image(systemName: "questionmark.circle.fill")
                                 .resizable()
                                 .scaledToFit()
                                 .foregroundStyle(Color(hex: "#9948C2"))
-                                .frame(width: 40, height: 40)
+                                .frame(width: 30, height: 30)
                         }
-                    }
-                    
-                    if isFavorite {
-                        Image(systemName: "heart.fill")
-                            .foregroundColor(.yellow)
                     }
                 }
                 .listRowSeparator(.hidden)

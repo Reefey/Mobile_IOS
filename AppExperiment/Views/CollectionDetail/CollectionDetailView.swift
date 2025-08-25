@@ -27,10 +27,8 @@ struct CollectionDetailView: View {
                 } else {
                     infoView
                 }
-                
-                Spacer()
             }
-            .ignoresSafeArea(edges: .top)
+            .ignoresSafeArea()
         }
         .navigationBarHidden(true)
         .fullScreenCover(isPresented: $showingImageDetail) {
@@ -49,7 +47,7 @@ struct CollectionDetailView: View {
                 .resizable()
                 .scaledToFill()
                 .clipped()
-                .frame(minHeight: 200, maxHeight: 300)
+                .frame(maxHeight: 300)
         }
     }
     
@@ -90,23 +88,28 @@ struct CollectionDetailView: View {
     }
     
     private var collectionGalleryView: some View {
-        ScrollView {
-            LazyVGrid(
-                columns: Array(repeating: GridItem(.flexible(), spacing: 2), count: 3),
-                spacing: 2
-            ) {
-                ForEach(items.indices, id: \.self) { index in
-                    CollectionItemView(item: items[index])
-                        .onTapGesture {
-                            selectedImageIndex = index
-                            showingImageDetail = true
-                        }
+        Group {
+            Spacer()
+            ScrollView {
+                LazyVGrid(
+                    columns: Array(repeating: GridItem(.flexible(), spacing: 2), count: 3),
+                    spacing: 2
+                ) {
+                    ForEach(items.indices, id: \.self) { index in
+                        CollectionItemView(item: items[index])
+                            .onTapGesture {
+                                selectedImageIndex = index
+                                showingImageDetail = true
+                            }
+                    }
                 }
+                .padding(.horizontal, 2)
+                .padding(.top, 2)
             }
-            .padding(.horizontal, 2)
-            .padding(.top, 2)
+            .background(Color(UIColor.systemBackground))
+            Spacer()
         }
-        .background(Color(UIColor.systemBackground))
+        
     }
     
     @ViewBuilder
