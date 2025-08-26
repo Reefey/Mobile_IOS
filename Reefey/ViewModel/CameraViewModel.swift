@@ -20,6 +20,19 @@ import Photos
 
 @Observable
 final class CameraViewModel: NSObject {
+    private let networkService = NetworkService.shared
+    
+    // TODO: Put it somewhere
+    private var deviceId: String {
+        let key = "static_device_id"
+        if let existingId = UserDefaults.standard.string(forKey: key) {
+            return existingId
+        } else {
+            let newId = UIDevice.current.identifierForVendor?.uuidString ?? "default-device-id"
+            UserDefaults.standard.set(newId, forKey: key)
+            return newId
+        }
+    }
     
     enum PhotoCaptureState {
         case notStarted
@@ -131,6 +144,14 @@ final class CameraViewModel: NSObject {
         }
     }
     
+    func sendToAI(pngImage: Data) async throws {
+        print("Sending binary image data...")
+        print("Making network request with deviceId: \(deviceId)...")
+        let base64String = pngImage.base64EncodedString().asJPGBaseURLString()
+        let response = try await networkService.analyzePhoto(deviceId: deviceId, photo: base64String)
+        print("AI Response: \(response)")
+    }
+    
     func retakePhoto() {
         Task(priority: .background) {
             await MainActor.run {
@@ -178,13 +199,26 @@ extension CameraViewModel: AVCapturePhotoCaptureDelegate, Sendable {
         guard let cgImage = CGImage(jpegDataProviderSource: provider, decode: nil, shouldInterpolate: true, intent: .defaultIntent) else { return }
         
         Task(priority: .background) {
+            let image = await UIImage(cgImage: cgImage, scale: 1, orientation: UIDevice.current.orientation.uiImageOrientation)
+            let imageData = image.jpegData(compressionQuality: 0.9)
+            guard let imagePng = imageData else {
+                throw NetworkError.invalidURL
+            }
+            let resizedImage = ImageResize.resize(imageData: imagePng)
+            
+            // Auto-save to Photos
             await MainActor.run {
-                let image = UIImage(cgImage: cgImage, scale: 1, orientation: UIDevice.current.orientation.uiImageOrientation)
-                let imageData = image.pngData()
-                
-                // Auto-save to Photos
                 self.saveToPhotos(image: image)
-                
+            }
+            
+            // Send to AI (async call)
+            do {
+                try await self.sendToAI(pngImage: resizedImage)
+            } catch {
+                print("Error sending to AI: \(error)")
+            }
+            
+            await MainActor.run {
                 withAnimation {
                     if let imageData {
                         self.photoCaptureState = .finished(imageData)

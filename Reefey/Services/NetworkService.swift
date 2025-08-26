@@ -36,6 +36,17 @@ class NetworkService {
             request.httpBody = body
         }
         
+        // Log curl command for debugging
+        var curlCommand = "curl -X \(method.rawValue)"
+        curlCommand += " '\(url.absoluteString)'"
+        curlCommand += " -H 'Content-Type: application/json'"
+        if let bodyData = body, let bodyString = String(data: bodyData, encoding: .utf8) {
+            let escapedBody = bodyString.replacingOccurrences(of: "'", with: "'\"'\"'")
+            curlCommand += " -d '\(escapedBody)'"
+        }
+        print("Curl command: \(curlCommand)")
+        print("---")
+        
         do {
             let (data, response) = try await session.data(for: request)
             
@@ -44,6 +55,8 @@ class NetworkService {
             }
             
             guard 200...299 ~= httpResponse.statusCode else {
+                let responseBody = String(data: data, encoding: .utf8) ?? "No response body"
+                print("HTTP Error \(httpResponse.statusCode): \(responseBody)")
                 throw NetworkError.httpError(statusCode: httpResponse.statusCode)
             }
             
@@ -186,6 +199,17 @@ class NetworkService {
         return try await request(
             endpoint: "/collections/\(deviceId)/\(id)/favorite",
             method: .POST
+        )
+    }
+    
+    func analyzePhoto(deviceId: String, photo: String) async throws -> AnalyzePhoto {
+        let req = AnalyzePhotoRequest(deviceId: deviceId, photo: photo)
+        let encoder = JSONEncoder()
+        let body = try encoder.encode(req)
+        return  try await request(
+            endpoint: "/ai/analyze-photo-base64",
+            method: .POST,
+            body: body
         )
     }
 }
