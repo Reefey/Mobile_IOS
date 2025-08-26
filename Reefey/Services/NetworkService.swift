@@ -63,7 +63,7 @@ class NetworkService {
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .iso8601
 
-            // print("Response: \(String(data: data, encoding: .utf8) ?? "No data")")
+            print("Response JSON: \(String(data: data, encoding: .utf8) ?? "No data")")
             
             return try decoder.decode(T.self, from: data)
         } catch let error as NetworkError {
