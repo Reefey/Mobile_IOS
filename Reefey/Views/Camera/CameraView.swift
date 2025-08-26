@@ -10,14 +10,14 @@ import SwiftData
 
 struct CameraView: View {
     @State internal var VM = CameraViewModel()
-    @Environment(\.modelContext) private var modelContext
+    @Environment(\.modelContext) var modelContext
     @Binding var path: [NavigationPath]
     @Binding var cameraShow: Bool
     @State private var selectedItem: PhotosPickerItem?
     @State private var selectedImage: UIImage?
     
-    @State private var isShowIdentifyDialog = false
-    @State private var identifyDialogState: IdentifyDialogEnum = .LOADING
+    @State var isShowIdentifyDialog = false
+    @State var identifyDialogState: IdentifyDialogEnum = .LOADING
     var body: some View {
         ZStack {
             cameraPreview
@@ -89,7 +89,23 @@ struct CameraView: View {
                 .background(.ultraThinMaterial)
             }
             if isShowIdentifyDialog {
-                IdentifyDialogView(identifyDialogState: $identifyDialogState)
+                IdentifyDialogView(identifyDialogState: $identifyDialogState, isShowIdentifyDialog: $isShowIdentifyDialog)
+            }
+        }
+        .onAppear {
+            // Check if we should show UNLOCK dialog from CameraLockView
+            if UserDefaults.standard.bool(forKey: "shouldShowUnlockDialog") {
+                isShowIdentifyDialog = true
+                identifyDialogState = .UNLOCK(
+                    viewUnidentifiedAction: {
+                        isShowIdentifyDialog = false
+                        // Handle view unidentified images action
+                    },
+                    dismissAction: {
+                        isShowIdentifyDialog = false
+                    }
+                )
+                UserDefaults.standard.removeObject(forKey: "shouldShowUnlockDialog")
             }
         }
         .onChange(of: selectedItem) { _, newItem in
@@ -118,40 +134,6 @@ struct CameraView: View {
                 VM.requestAccessAndSetup()
                 setupAIFailureCallback()
             }
-    }
-    
-    private func setupAIFailureCallback() {
-        VM.onAIFailure = { [self] assetIdentifier in
-            VM.saveToSwiftData(photoAssetIdentifier: assetIdentifier, context: modelContext)
-        }
-        
-        VM.onAIProcessingComplete = { [self] in
-            isShowIdentifyDialog = false
-        }
-        
-        VM.onAIUnidentified = { [self] in
-            identifyDialogState = .UNIDENTIFIED(
-                morePhotosAction: {
-                    isShowIdentifyDialog = false
-                    identifyDialogState = .LOADING
-                },
-                viewUnidentifiedAction: {
-                    // Handle view unidentified images action
-                }
-            )
-        }
-        
-        VM.onNetworkUnavailable = { [self] in
-            identifyDialogState = .OFFLINE(
-                morePhotosAction: {
-                    isShowIdentifyDialog = false
-                    identifyDialogState = .LOADING
-                },
-                viewUnidentifiedAction: {
-                    // Handle view unidentified images action
-                }
-            )
-        }
     }
 
 }

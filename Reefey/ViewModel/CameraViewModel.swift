@@ -23,11 +23,17 @@ final class CameraViewModel: BaseCameraViewModel {
     // Callback for hiding the identify dialog
     var onAIProcessingComplete: (() -> Void)?
     
+    // Callback for successful identification with marine data and captured image
+    var onAIIdentificationSuccess: ((MarineData, UIImage) -> Void)?
+    
     // Callback for showing unidentified dialog when AI fails
     var onAIUnidentified: (() -> Void)?
     
     // Callback for showing offline dialog when network is unavailable
     var onNetworkUnavailable: (() -> Void)?
+    
+    // Callback for showing rate limit dialog when AI limit is reached
+    var onRateLimitExceeded: (() -> Void)?
     
     func saveToPhotos(image: UIImage, completion: @escaping (String?) -> Void) {
         var assetIdentifier: String?
@@ -65,7 +71,7 @@ final class CameraViewModel: BaseCameraViewModel {
         }
     }
     
-    func sendToAI(pngImage: Data) async throws {
+    func sendToAI(pngImage: Data) async throws -> MarineData {
         print("Sending binary image data...")
         print("Making network request with deviceId: \(deviceManager.deviceId)...")
         let base64String = pngImage.base64EncodedString().asJPGBaseURLString()
@@ -74,6 +80,17 @@ final class CameraViewModel: BaseCameraViewModel {
         if response.success {
             print("AI Response: \(response.data)")
             print("Message: \(response.message ?? "No message")")
+            
+            // Check if we have identified species with marine data
+            if let data = response.data,
+               !data.collectionEntries.isEmpty,
+               let marineData = data.collectionEntries.first?.marineData {
+                // Species identified successfully
+                return marineData
+            } else {
+                // No species identified
+                throw NetworkError.custom("No species identified")
+            }
         } else {
             print("AI Analysis failed: \(response.error ?? "Unknown error")")
             throw NetworkError.custom(response.error ?? "AI analysis failed")
@@ -89,17 +106,32 @@ final class CameraViewModel: BaseCameraViewModel {
             // Send to AI (async call)
             Task {
                 do {
-                    try await self.sendToAI(pngImage: resizedImage)
+                    let marineData = try await self.sendToAI(pngImage: resizedImage)
                     print("AI analysis successful")
                     await MainActor.run {
-                        self.onAIProcessingComplete?()
+                        self.onAIIdentificationSuccess?(marineData, image)
                     }
                 } catch {
                     print("Error sending to AI: \(error)")
                     
                     // Check if it's a network connectivity issue
                     if let networkError = error as? NetworkError {
+                        print("NetworkError detected: \(networkError)")
                         switch networkError {
+                        case .custom(let message) where message.contains("Rate limit exceeded") || message.contains("RATE_LIMIT_EXCEEDED"):
+                            // Rate limit exceeded - show rate limit dialog
+                            print("Rate limit detected with message: \(message)")
+                            await MainActor.run {
+                                self.onAIFailure?(identifier)
+                                self.onRateLimitExceeded?()
+                            }
+                        case .httpError(let statusCode) where statusCode == 429:
+                            // Rate limit exceeded (HTTP 429) - show rate limit dialog
+                            print("HTTP 429 Rate limit detected")
+                            await MainActor.run {
+                                self.onAIFailure?(identifier)
+                                self.onRateLimitExceeded?()
+                            }
                         case .invalidURL, .invalidResponse, .httpError, .noData:
                             // Network connectivity issues - show offline dialog
                             await MainActor.run {

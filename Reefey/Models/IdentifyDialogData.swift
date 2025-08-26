@@ -4,7 +4,7 @@
 //
 //  Created by Reza Juliandri on 26/08/25.
 //
-
+import UIKit
 
 struct IdentifyDialogData {
     var title: String = ""
@@ -17,4 +17,8 @@ struct IdentifyDialogData {
     var isShowButton: Bool = false
     var isShowSecondaryButton: Bool = false
     var isRotatingStarfish: Bool = false
+    var showXButton: Bool = false
+    var xButtonAction: () -> Void = { }
+    var marineData: MarineData? = nil
+    var capturedImage: UIImage? = nil
 }

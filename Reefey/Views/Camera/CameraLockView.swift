@@ -16,6 +16,7 @@ struct CameraLockView: View {
     @State private var isPressed = false
     @State private var pressTimer: Timer?
     @State private var hapticTimer: Timer?
+    @State private var picturesTaken = 0
     
     // Container for volume handler
     @State private var containerView = UIView()
@@ -124,7 +125,12 @@ struct CameraLockView: View {
         let notificationFeedback = UINotificationFeedbackGenerator()
         notificationFeedback.notificationOccurred(.success)
         
-        // Unlock action
+        // Unlock action - only show if pictures were taken
+        if picturesTaken > 0 {
+            // Pass info to show UNLOCK dialog
+            UserDefaults.standard.set(true, forKey: "shouldShowUnlockDialog")
+        }
+        
         cameraShow = true
         path = []
     }
@@ -153,6 +159,7 @@ struct CameraLockView: View {
     private func handleVolumeDownPress() {
         print("Volume Down pressed")
         VM.takePhoto()
+        picturesTaken += 1
         let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
         impactFeedback.impactOccurred()
     }
