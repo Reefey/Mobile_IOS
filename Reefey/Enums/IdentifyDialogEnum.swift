@@ -9,7 +9,8 @@
 enum IdentifyDialogEnum {
     case LOADING
     case UNLOCK
-    case OFFLINE
+    case OFFLINE(morePhotosAction: () -> Void = {}, viewUnidentifiedAction: () -> Void)
+    case UNIDENTIFIED(morePhotosAction: () -> Void = {}, viewUnidentifiedAction: () -> Void = {})
     
     func getIdentifyDialogData() -> IdentifyDialogData {
         switch self {
@@ -27,14 +28,28 @@ enum IdentifyDialogEnum {
                 buttonSecondaryText: "View unidentified images",
                 isShowSecondaryButton: true,
             )
-        case .OFFLINE:
+        case .OFFLINE(let morePhotosAction, let viewUnidentifiedAction):
             return IdentifyDialogData(
                 title: "You're offline!",
                 buttonText: "Take more photo",
+                buttonAction: morePhotosAction,
                 buttonSecondaryText: "View unidentified images",
+                buttonSecondaryAction: viewUnidentifiedAction,
                 isShowBody: false,
                 isShowButton: true,
                 isShowSecondaryButton: true,
+            )
+        case .UNIDENTIFIED(let morePhotosAction, let viewUnidentifiedAction):
+            return IdentifyDialogData(
+                title: "No match found",
+                body: "Your photos might not match any marine species in our database",
+                buttonText: "Take more photo",
+                buttonAction: morePhotosAction,
+                buttonSecondaryText: "View unidentified images",
+                buttonSecondaryAction: viewUnidentifiedAction,
+                isShowBody: true,
+                isShowButton: true,
+                isShowSecondaryButton: true
             )
         }
     }

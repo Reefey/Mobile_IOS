@@ -20,17 +20,8 @@ class CollectionsViewModel {
     var selectedDanger: String = "ALL"
     var searchText = ""
     
-    // MARK: - Device ID (static identifier stored in UserDefaults)
-    private var deviceId: String {
-        let key = "static_device_id"
-        if let existingId = UserDefaults.standard.string(forKey: key) {
-            return existingId
-        } else {
-            let newId = UIDevice.current.identifierForVendor?.uuidString ?? "default-device-id"
-            UserDefaults.standard.set(newId, forKey: key)
-            return newId
-        }
-    }
+    // MARK: - Device Manager
+    private let deviceManager = DeviceManager.shared
     
     // MARK: - Available Filter Options
     var availableCategories: [String] = ["ALL", "Fishes", "Creatures", "Corals"]
@@ -61,7 +52,7 @@ class CollectionsViewModel {
             updateFilters()
             
             let response = try await networkService.fetchCollections(
-                deviceId: deviceId,
+                deviceId: deviceManager.deviceId,
                 filters: filters,
                 page: currentPage,
                 size: 20
@@ -132,7 +123,7 @@ class CollectionsViewModel {
     @MainActor
     func toggleFavorite(for collection: Collection) async {
         do {
-            let updatedCollection = try await networkService.toggleFavorite(deviceId: deviceId, id: collection.id)
+            let updatedCollection = try await networkService.toggleFavorite(deviceId: deviceManager.deviceId, id: collection.id)
             
             if let index = collections.firstIndex(where: { $0.id == collection.id }) {
                 collections[index] = updatedCollection
@@ -155,7 +146,7 @@ class CollectionsViewModel {
                 notes: notes
             )
             
-            let newCollection = try await networkService.createCollection(deviceId: deviceId, request)
+            let newCollection = try await networkService.createCollection(deviceId: deviceManager.deviceId, request)
             collections.insert(newCollection, at: 0)
             return true
         } catch {
@@ -167,7 +158,7 @@ class CollectionsViewModel {
     @MainActor
     func deleteCollection(_ collection: Collection) async {
         do {
-            try await networkService.deleteCollection(deviceId: deviceId, id: collection.id)
+            try await networkService.deleteCollection(deviceId: deviceManager.deviceId, id: collection.id)
             collections.removeAll { $0.id == collection.id }
         } catch {
             print("Failed to delete collection: \(error.localizedDescription)")

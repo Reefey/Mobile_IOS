@@ -12,7 +12,7 @@ import Photos
 struct UnidentifiedImagesDebugView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    @Query private var unidentifiedImages: [UnidentifiedImageModel]
+    @Query(sort: \UnidentifiedImageModel.dateTaken, order: .reverse) private var unidentifiedImages: [UnidentifiedImageModel]
     
     var body: some View {
         NavigationView {

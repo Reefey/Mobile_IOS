@@ -25,13 +25,15 @@ struct IdentifyDialogView: View {
                               .frame(width: 80, height: 80)
                               .padding(.bottom, 20)
                               .rotationEffect(.degrees(isRotating ? 360 : 0))
-                              .animation(.linear(duration: 4.0).repeatForever(autoreverses: false),
+                              .animation(isRotating ? .linear(duration: 4.0).repeatForever(autoreverses: false) : .default,
                            value: isRotating)
                               .onAppear {
                                   isRotating = identifyDialogData.isRotatingStarfish
                               }
                               .onChange(of: identifyDialogData.isRotatingStarfish) {
-                                  isRotating = identifyDialogData.isRotatingStarfish
+                                  withAnimation {
+                                      isRotating = identifyDialogData.isRotatingStarfish
+                                  }
                               }
                         Text(identifyDialogData.title)
                             .font(.title)

@@ -6,9 +6,11 @@
 //
 import SwiftUI
 import PhotosUI
+import SwiftData
 
 struct CameraView: View {
     @State internal var VM = CameraViewModel()
+    @Environment(\.modelContext) private var modelContext
     @Binding var path: [NavigationPath]
     @Binding var cameraShow: Bool
     @State private var selectedItem: PhotosPickerItem?
@@ -46,6 +48,8 @@ struct CameraView: View {
                         
                         Spacer()
                         Button {
+                            isShowIdentifyDialog = true
+                            identifyDialogState = .LOADING
                             VM.takePhoto()
                         } label : {
                             ZStack {
@@ -94,7 +98,11 @@ struct CameraView: View {
                    let uiImage = UIImage(data: data) {
                     selectedImage = uiImage
                     // Save to Photos if needed
-                    VM.saveToPhotos(image: uiImage)
+                    VM.saveToPhotos(image: uiImage) { assetIdentifier in
+                        if let identifier = assetIdentifier {
+                            print("Photo from picker saved with identifier: \(identifier)")
+                        }
+                    }
                     
                     // Provide feedback
                     let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
@@ -108,7 +116,42 @@ struct CameraView: View {
             .ignoresSafeArea()
             .onAppear {
                 VM.requestAccessAndSetup()
+                setupAIFailureCallback()
             }
+    }
+    
+    private func setupAIFailureCallback() {
+        VM.onAIFailure = { [self] assetIdentifier in
+            VM.saveToSwiftData(photoAssetIdentifier: assetIdentifier, context: modelContext)
+        }
+        
+        VM.onAIProcessingComplete = { [self] in
+            isShowIdentifyDialog = false
+        }
+        
+        VM.onAIUnidentified = { [self] in
+            identifyDialogState = .UNIDENTIFIED(
+                morePhotosAction: {
+                    isShowIdentifyDialog = false
+                    identifyDialogState = .LOADING
+                },
+                viewUnidentifiedAction: {
+                    // Handle view unidentified images action
+                }
+            )
+        }
+        
+        VM.onNetworkUnavailable = { [self] in
+            identifyDialogState = .OFFLINE(
+                morePhotosAction: {
+                    isShowIdentifyDialog = false
+                    identifyDialogState = .LOADING
+                },
+                viewUnidentifiedAction: {
+                    // Handle view unidentified images action
+                }
+            )
+        }
     }
 
 }

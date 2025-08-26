@@ -202,7 +202,7 @@ class NetworkService {
         )
     }
     
-    func analyzePhoto(deviceId: String, photo: String) async throws -> AnalyzePhoto {
+    func analyzePhoto(deviceId: String, photo: String) async throws -> APIResponse<AnalyzePhotoData> {
         let req = AnalyzePhotoRequest(deviceId: deviceId, photo: photo)
         let encoder = JSONEncoder()
         let body = try encoder.encode(req)
@@ -228,6 +228,7 @@ enum NetworkError: Error, LocalizedError {
     case httpError(statusCode: Int)
     case decodingError(Error)
     case noData
+    case custom(String)
     
     var errorDescription: String? {
         switch self {
@@ -241,6 +242,8 @@ enum NetworkError: Error, LocalizedError {
             return "Decoding error: \(error.localizedDescription)"
         case .noData:
             return "No data received"
+        case .custom(let message):
+            return message
         }
     }
 }
