@@ -47,23 +47,41 @@ struct CollectionsView : View {
                 .padding(.horizontal)
                 
                 // Content
-                switch selectedView {
-                case .GRID:
-                    ScrollView(showsIndicators: false) {
-                        CollectionGridView(collections: viewModel.collections, path: $path)
+                if viewModel.isLoading && viewModel.collections.isEmpty {
+                    loadingView
+                } else if viewModel.collections.isEmpty {
+                    emptyStateView
+                } else {
+                    switch selectedView {
+                    case .GRID:
+                        ScrollView(showsIndicators: false) {
+                            CollectionGridView(collections: viewModel.collections, path: $path)
+                        }
+                        .padding(.horizontal)
+                    case .LIST:
+                        CollectionListView(collections: viewModel.collections, path: $path)
                     }
-                    .padding(.horizontal)
-                case .LIST:
-                    CollectionListView(collections: viewModel.collections, path: $path)
                 }
             }
             
-            // Loading overlay
-            if viewModel.isLoading {
-                ProgressView("Loading collections...")
-                    .padding()
+            // Loading overlay for pagination (when there are existing collections)
+            if viewModel.isLoading && !viewModel.collections.isEmpty {
+                VStack {
+                    Spacer()
+                    HStack {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                        Text("Loading more...")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
                     .background(.ultraThinMaterial)
-                    .cornerRadius(10)
+                    .cornerRadius(20)
+                    .shadow(radius: 2)
+                }
+                .padding(.bottom, 100) // Account for bottom toolbar
             }
             
             // Error overlay
@@ -148,6 +166,66 @@ struct CollectionsView : View {
         }
         .toolbarBackground(Color(hex:"#0FAAAC"), for: .bottomBar)
         .toolbarBackground(.visible, for: .bottomBar)
+    }
+    
+    // MARK: - Loading View
+    private var loadingView: some View {
+        VStack(spacing: 24) {
+            Spacer()
+            
+            VStack(spacing: 16) {
+                ProgressView()
+                    .scaleEffect(1.2)
+                    .tint(Color(hex: "#0FAAAC"))
+                
+                Text("Loading Collections")
+                    .font(.title2)
+                    .fontWeight(.medium)
+                    .foregroundColor(.primary)
+                
+                // Text("Please wait while we fetch your marine discoveries...")
+                //     .font(.body)
+                //     .foregroundColor(.secondary)
+                //     .multilineTextAlignment(.center)
+                //     .padding(.horizontal, 32)
+            }
+            
+            Spacer()
+        }
+        .padding()
+    }
+    
+    // MARK: - Empty State View
+    private var emptyStateView: some View {
+        VStack(spacing: 24) {
+            Spacer()
+            
+            VStack(spacing: 16) {
+                Image(systemName: "fish.fill")
+                    .font(.system(size: 64))
+                    .foregroundColor(.gray)
+                
+                Text("No Collections Yet")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+                
+                Text("Start your marine adventure by capturing your first creature!")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+            }
+            
+            // Button("Capture New Creature") {
+            //     cameraShow = true
+            // }
+            // .buttonStyle(.borderedProminent)
+            // .controlSize(.large)
+            
+            Spacer()
+        }
+        .padding()
     }
 }
 

@@ -28,6 +28,8 @@ struct MarineDetailView: View {
                 // Found At Spots
                 if let spots = species.foundAtSpots, !spots.isEmpty {
                     foundAtSpotsSection(spots: spots)
+                } else {
+                    noSpotsSection
                 }
             }
             .padding()
@@ -39,7 +41,7 @@ struct MarineDetailView: View {
     // MARK: - Header Image
     private var headerImage: some View {
         Group {
-            if let imageURL = species.marineImage {
+            if let imageURL = species.imageUrl {
                 AsyncImage(url: URL(string: imageURL)) { image in
                     image
                         .resizable()
@@ -96,8 +98,12 @@ struct MarineDetailView: View {
             
             VStack(spacing: 8) {
                 InfoRow(title: "Size", value: viewModel.sizeText(for: species))
-                InfoRow(title: "Lifespan", value: species.lifeSpan)
-                InfoRow(title: "Diet", value: species.diet)
+                if let lifeSpan = species.lifeSpan {
+                    InfoRow(title: "Lifespan", value: lifeSpan)
+                }
+                if let diet = species.diet {
+                    InfoRow(title: "Diet", value: diet)
+                }
             }
         }
     }
@@ -110,10 +116,16 @@ struct MarineDetailView: View {
                 .fontWeight(.bold)
             
             VStack(spacing: 8) {
-                InfoRow(title: "Behavior", value: species.behavior)
+                if let behavior = species.behavior {
+                    InfoRow(title: "Behavior", value: behavior)
+                }
                 InfoRow(title: "Habitat", value: viewModel.habitatText(for: species))
-                InfoRow(title: "Migration", value: species.migration)
-                InfoRow(title: "Reproduction", value: species.reproduction)
+                if let migration = species.migration {
+                    InfoRow(title: "Migration", value: migration)
+                }
+                if let reproduction = species.reproduction {
+                    InfoRow(title: "Reproduction", value: reproduction)
+                }
             }
         }
     }
@@ -126,7 +138,9 @@ struct MarineDetailView: View {
                 .fontWeight(.bold)
             
             VStack(spacing: 8) {
-                InfoRow(title: "Status", value: species.endangered)
+                if let endangered = species.endangered {
+                    InfoRow(title: "Status", value: endangered)
+                }
             }
         }
     }
@@ -134,16 +148,18 @@ struct MarineDetailView: View {
     // MARK: - Fun Fact Section
     private var funFactSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Fun Fact")
-                .font(.title2)
-                .fontWeight(.bold)
-            
-            Text(species.funFact)
-                .font(.body)
-                .foregroundColor(.secondary)
-                .padding()
-                .background(Color.blue.opacity(0.1))
-                .cornerRadius(8)
+            if let funFact = species.funFact {
+                Text("Fun Fact")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                
+                Text(funFact)
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .padding()
+                    .background(Color.blue.opacity(0.1))
+                    .cornerRadius(8)
+            }
         }
     }
     
@@ -157,6 +173,22 @@ struct MarineDetailView: View {
             ForEach(spots, id: \.spotId) { spot in
                 SpotCard(spot: spot)
             }
+        }
+    }
+    
+    // MARK: - No Spots Section
+    private var noSpotsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Found At Spots")
+                .font(.title2)
+                .fontWeight(.bold)
+            
+            Text("No spot information available for this species")
+                .font(.body)
+                .foregroundColor(.secondary)
+                .padding()
+                .background(Color(.systemGray6))
+                .cornerRadius(8)
         }
     }
 }
@@ -193,7 +225,7 @@ struct SpotCard: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(spot.spotName)
+            Text("Spot #\(spot.spotId)")
                 .font(.headline)
                 .fontWeight(.semibold)
             
@@ -209,16 +241,6 @@ struct SpotCard: View {
                 }
                 
                 Spacer()
-                
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text("Lat: \(String(format: "%.4f", spot.lat))")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    Text("Lng: \(String(format: "%.4f", spot.lng))")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
             }
             
             if let notes = spot.notes {
@@ -250,7 +272,7 @@ struct SpotCard: View {
             danger: "Low",
             venomous: false,
             description: "The iconic clownfish, known for its bright orange color with white stripes.",
-            marineImage: nil,
+            imageUrl: nil,
             lifeSpan: "6-10 years",
             reproduction: "Eggs near anemone; male guards",
             migration: "Site-attached to host",
@@ -259,9 +281,6 @@ struct SpotCard: View {
             foundAtSpots: [
                 MarineSpot(
                     spotId: 1,
-                    spotName: "Menjangan Island",
-                    lat: -8.1526,
-                    lng: 114.5139,
                     frequency: "Common",
                     seasonality: "Year-round",
                     notes: "Found near anemones in shallow waters"

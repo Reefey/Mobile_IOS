@@ -213,7 +213,7 @@ struct MarineSpeciesRow: View {
         NavigationLink(destination: MarineDetailView(species: species)) {
             HStack(spacing: 12) {
                 // Image or Placeholder
-                if let imageURL = species.marineImage {
+                if let imageURL = species.imageUrl {
                     AsyncImage(url: URL(string: imageURL)) { image in
                         image
                             .resizable()

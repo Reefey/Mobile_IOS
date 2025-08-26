@@ -4,10 +4,13 @@ import SwiftUI
 struct CollectionDetailView: View {
     let collection: Collection
     @Environment(\.dismiss) private var dismiss
+    @State private var viewModel = CollectionDetailViewModel()
     
     @State private var selectedTab = 0
     @State private var showingImageDetail = false
     @State private var selectedImageIndex = 0
+    @State private var marineSpecies: MarineSpecies?
+    @State private var isLoadingMarineData = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -48,12 +51,25 @@ struct CollectionDetailView: View {
                 isPresented: $showingImageDetail
             )
         }
+        .onAppear {
+            Task {
+                await loadMarineSpeciesData()
+            }
+        }
     }
     
     private var headerSection: some View {
         ZStack {
             // Main header image
             if let imageURL = collection.marineImageUrl {
+                AsyncImage(url: URL(string: imageURL)) { image in
+                    image
+                        .resizable()
+                        .scaledToFill()
+                } placeholder: {
+                    headerPlaceholder
+                }
+            } else if let marineSpecies = marineSpecies, let imageURL = marineSpecies.imageUrl {
                 AsyncImage(url: URL(string: imageURL)) { image in
                     image
                         .resizable()
@@ -163,38 +179,224 @@ struct CollectionDetailView: View {
     private var infoView: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                InfoSectionView(title: "Basic Information", content: [
-                    ("Species", collection.species),
-                    ("Scientific Name", collection.scientificName),
-                    ("Rarity", "\(collection.rarity)/5"),
-                    ("Status", collection.status)
-                ])
-                
-                if let minSize = collection.sizeMinCm, let maxSize = collection.sizeMaxCm {
-                    InfoSectionView(title: "Size", content: [
-                        ("Size Range", "\(Int(minSize))-\(Int(maxSize)) cm")
-                    ])
+                if isLoadingMarineData {
+                    VStack {
+                        ProgressView("Loading marine data...")
+                            .padding()
+                    }
+                } else if let marineSpecies = marineSpecies {
+                    // Comprehensive Marine Species Information
+                    basicInfoSection(marineSpecies)
+                    physicalCharacteristicsSection(marineSpecies)
+                    behaviorHabitatSection(marineSpecies)
+                    conservationSection(marineSpecies)
+                    funFactSection(marineSpecies)
+                    
+                    if let spots = marineSpecies.foundAtSpots, !spots.isEmpty {
+                        foundAtSpotsSection(spots: spots)
+                    }
+                } else {
+                    // Fallback to collection data only
+                    fallbackInfoSection
                 }
                 
-                if !collection.habitatType.isEmpty {
-                    InfoSectionView(title: "Habitat", content: [
-                        ("Habitat Type", collection.habitatType.joined(separator: ", "))
-                    ])
-                }
-                
-                InfoSectionView(title: "Description", content: [
-                    ("Details", collection.description)
-                ])
-                
-                InfoSectionView(title: "Sightings", content: [
-                    ("Total Photos", "\(collection.totalPhotos)"),
-                    ("First Seen", collection.firstSeenDate?.formatted(date: .abbreviated, time: .omitted) ?? collection.firstSeen),
-                    ("Last Seen", collection.lastSeenDate?.formatted(date: .abbreviated, time: .omitted) ?? collection.lastSeen)
-                ])
+                // Collection-specific information
+                collectionInfoSection
             }
             .padding(20)
         }
         .background(Color(UIColor.systemBackground))
+    }
+    
+    // MARK: - Marine Data Loading
+    private func loadMarineSpeciesData() async {
+        isLoadingMarineData = true
+        
+        do {
+            let networkService = NetworkService.shared
+            let response = try await networkService.fetchMarineSpeciesDetail(id: collection.marineId)
+            if response.success {
+                await MainActor.run {
+                    marineSpecies = response.data
+                }
+            }
+        } catch {
+            print("Failed to load marine species data: \(error.localizedDescription)")
+        }
+        
+        await MainActor.run {
+            isLoadingMarineData = false
+        }
+    }
+    
+    // MARK: - Info Sections
+    private func basicInfoSection(_ species: MarineSpecies) -> some View {
+        InfoSectionView(title: "Basic Information", content: [
+            ("Species", species.name),
+            ("Scientific Name", species.scientificName),
+            ("Category", species.category),
+            ("Rarity", "\(species.rarity)/5 - \(rarityText(for: species.rarity))"),
+            ("Danger Level", species.danger),
+            ("Venomous", species.venomous ? "Yes" : "No")
+        ])
+    }
+    
+    private func physicalCharacteristicsSection(_ species: MarineSpecies) -> some View {
+        var content: [(String, String)] = []
+        
+        // Handle size
+        if let sizeMin = species.sizeMinCm {
+            if let sizeMax = species.sizeMaxCm {
+                content.append(("Size Range", "\(Int(sizeMin))-\(Int(sizeMax)) cm"))
+            } else {
+                content.append(("Size Range", "\(Int(sizeMin))+ cm"))
+            }
+        } else {
+            content.append(("Size Range", "Size unknown"))
+        }
+        
+        // Handle lifespan
+        if let lifeSpan = species.lifeSpan {
+            content.append(("Life Span", lifeSpan))
+        }
+        
+        // Handle habitat
+        if species.habitatType.isEmpty {
+            content.append(("Habitat Type", "Habitat information not available"))
+        } else {
+            content.append(("Habitat Type", species.habitatType.joined(separator: ", ")))
+        }
+        
+        return InfoSectionView(title: "Physical Characteristics", content: content)
+    }
+    
+    private func behaviorHabitatSection(_ species: MarineSpecies) -> some View {
+        var content: [(String, String)] = []
+        
+        if let diet = species.diet {
+            content.append(("Diet", diet))
+        }
+        if let behavior = species.behavior {
+            content.append(("Behavior", behavior))
+        }
+        if let migration = species.migration {
+            content.append(("Migration", migration))
+        }
+        if let reproduction = species.reproduction {
+            content.append(("Reproduction", reproduction))
+        }
+        
+        return InfoSectionView(title: "Behavior & Habitat", content: content)
+    }
+    
+    private func conservationSection(_ species: MarineSpecies) -> some View {
+        var content: [(String, String)] = [
+            ("Description", species.description)
+        ]
+        
+        if let endangered = species.endangered {
+            content.append(("Endangered Status", endangered))
+        }
+        
+        return InfoSectionView(title: "Conservation", content: content)
+    }
+    
+    private func funFactSection(_ species: MarineSpecies) -> some View {
+        if let funFact = species.funFact {
+            return AnyView(InfoSectionView(title: "Fun Fact", content: [
+                ("Did You Know?", funFact)
+            ]))
+        } else {
+            return AnyView(EmptyView())
+        }
+    }
+    
+    private func foundAtSpotsSection(spots: [MarineSpot]) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Found At Spots")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundColor(.primary)
+            
+            VStack(alignment: .leading, spacing: 12) {
+                ForEach(spots, id: \.spotId) { spot in
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Spot #\(spot.spotId)")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.primary)
+                        
+                        HStack {
+                            Text("Frequency: \(spot.frequency)")
+                                .font(.system(size: 14))
+                                .foregroundColor(.secondary)
+                            
+                            Spacer()
+                            
+                            Text("Season: \(spot.seasonality)")
+                                .font(.system(size: 14))
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        if let notes = spot.notes, !notes.isEmpty {
+                            Text(notes)
+                                .font(.system(size: 14))
+                                .foregroundColor(.secondary)
+                                .italic()
+                        }
+                    }
+                    .padding()
+                    .background(Color(.systemGray6))
+                    .cornerRadius(8)
+                }
+            }
+        }
+        .padding(.vertical, 8)
+    }
+    
+    private var fallbackInfoSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            InfoSectionView(title: "Basic Information", content: [
+                ("Species", collection.species),
+                ("Scientific Name", collection.scientificName),
+                ("Rarity", "\(collection.rarity)/5"),
+                ("Status", collection.status)
+            ])
+            
+            if let minSize = collection.sizeMinCm, let maxSize = collection.sizeMaxCm {
+                InfoSectionView(title: "Size", content: [
+                    ("Size Range", "\(Int(minSize))-\(Int(maxSize)) cm")
+                ])
+            }
+            
+            if !collection.habitatType.isEmpty {
+                InfoSectionView(title: "Habitat", content: [
+                    ("Habitat Type", collection.habitatType.joined(separator: ", "))
+                ])
+            }
+            
+            InfoSectionView(title: "Description", content: [
+                ("Details", collection.description)
+            ])
+        }
+    }
+    
+    private var collectionInfoSection: some View {
+        InfoSectionView(title: "Your Collection", content: [
+            ("Total Photos", "\(collection.totalPhotos)"),
+            ("First Seen", collection.firstSeenDate?.formatted(date: .abbreviated, time: .omitted) ?? collection.firstSeen),
+            ("Last Seen", collection.lastSeenDate?.formatted(date: .abbreviated, time: .omitted) ?? collection.lastSeen)
+        ])
+    }
+    
+    // MARK: - Helper Methods
+    private func rarityText(for rarity: Int) -> String {
+        switch rarity {
+        case 1: return "Very Common"
+        case 2: return "Common"
+        case 3: return "Uncommon"
+        case 4: return "Rare"
+        case 5: return "Very Rare"
+        default: return "Unknown"
+        }
     }
     
 }
