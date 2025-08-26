@@ -6,9 +6,11 @@
 //
 import SwiftUI
 import UIKit
+import SwiftData
 
 struct CameraLockView: View {
-    @State internal var VM = CameraViewModel()
+    @State internal var VM = CameraLockViewModel()
+    @Environment(\.modelContext) private var modelContext
     @Binding var path: [NavigationPath]
     @Binding var cameraShow: Bool
     @State private var isPressed = false
@@ -71,6 +73,7 @@ struct CameraLockView: View {
         )
         .onAppear {
             setupVolumeCallbacks()
+            setupSwiftDataCallback()
             VM.setupVolumeHandler(containerView: containerView)
         }
         .onDisappear {
@@ -84,7 +87,7 @@ struct CameraLockView: View {
         }
     }
     private var cameraPreview: some View {
-        CameraPreview(cameraVM: $VM)
+        CameraPreview<CameraLockViewModel>(cameraVM: $VM)
             .ignoresSafeArea()
             .onAppear {
                 VM.requestAccessAndSetup()
@@ -132,6 +135,12 @@ struct CameraLockView: View {
         }
         VM.onVolumeDownPressed = {
             handleVolumeDownPress()
+        }
+    }
+    
+    private func setupSwiftDataCallback() {
+        VM.onPhotoCapture = { [self] assetIdentifier in
+            VM.saveToSwiftData(photoAssetIdentifier: assetIdentifier, context: modelContext)
         }
     }
     

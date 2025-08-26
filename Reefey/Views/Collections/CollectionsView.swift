@@ -11,6 +11,7 @@ struct CollectionsView : View {
     @Binding var cameraShow: Bool
     @State private var viewModel = CollectionsViewModel()
     @State private var selectedView: CollectionViewTypeEnum = .LIST
+    @State private var showDebugView = false
     
     var body: some View {
         ZStack {
@@ -128,8 +129,19 @@ struct CollectionsView : View {
         .sheet(isPresented: $cameraShow){
             CameraView(path: $path, cameraShow: $cameraShow)
         }
+        .fullScreenCover(isPresented: $showDebugView) {
+            UnidentifiedImagesDebugView()
+        }
         .toolbar {
             ToolbarItemGroup(placement: .navigationBarTrailing) {
+                // Debug button
+                Button {
+                    showDebugView = true
+                } label: {
+                    Image(systemName: "ladybug")
+                        .foregroundColor(.orange)
+                }
+                
                 // View toggle button
                 Button {
                     selectedView = selectedView == .GRID ? .LIST : .GRID

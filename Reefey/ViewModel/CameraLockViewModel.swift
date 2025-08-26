@@ -1,38 +1,19 @@
 //
-//  CameraViewModel.swift
+//  CameraLockViewModel.swift
 //  Reefey
 //
-//  Created by Reza Juliandri on 15/08/25.
+//  Created by Reza Juliandri on 26/08/25.
 //
 
-
-//
-//  CameraViewModel.swift
-//  Camera
-//
-//  Created by Reza Juliandri on 17/04/25.
-//
 import Foundation
 import AVFoundation
 import UIKit
 import SwiftUI
 import Photos
+import SwiftData
 
 @Observable
-final class CameraViewModel: NSObject, CameraViewModelProtocol {
-    private let networkService = NetworkService.shared
-    
-    // TODO: Put it somewhere
-    private var deviceId: String {
-        let key = "static_device_id"
-        if let existingId = UserDefaults.standard.string(forKey: key) {
-            return existingId
-        } else {
-            let newId = UIDevice.current.identifierForVendor?.uuidString ?? "default-device-id"
-            UserDefaults.standard.set(newId, forKey: key)
-            return newId
-        }
-    }
+final class CameraLockViewModel: NSObject, CameraViewModelProtocol {
     
     enum PhotoCaptureState {
         case notStarted
@@ -42,9 +23,7 @@ final class CameraViewModel: NSObject, CameraViewModelProtocol {
     
     override init(){
         super.init()
-        // Don't request permissions in init - defer to when actually needed
     }
-    
     
     var session = AVCaptureSession()
     var preview = AVCaptureVideoPreviewLayer()
@@ -65,6 +44,9 @@ final class CameraViewModel: NSObject, CameraViewModelProtocol {
     private var volumeHandler: VolumeButtonHandler?
     var onVolumeUpPressed: (() -> Void)?
     var onVolumeDownPressed: (() -> Void)?
+    
+    // Callback for saving to SwiftData
+    var onPhotoCapture: ((String) -> Void)?
     
     func requestAccess() {
         self.requestAccessAndSetup()
@@ -130,26 +112,41 @@ final class CameraViewModel: NSObject, CameraViewModelProtocol {
             self.photoCaptureState = .processing
         }
     }
-    func saveToPhotos(image: UIImage) {
+    
+    func saveToPhotos(image: UIImage, completion: @escaping (String?) -> Void) {
+        var assetIdentifier: String?
+        
         PHPhotoLibrary.shared().performChanges({
-            PHAssetCreationRequest.creationRequestForAsset(from: image)
+            let creationRequest = PHAssetCreationRequest.creationRequestForAsset(from: image)
+            assetIdentifier = creationRequest.placeholderForCreatedAsset?.localIdentifier
         }) { success, error in
             DispatchQueue.main.async {
-                if success {
-                    print("Photo saved successfully")
-                } else if let error = error {
-                    print("Error saving photo: \(error)")
+                if success, let identifier = assetIdentifier {
+                    print("Photo saved successfully with identifier: \(identifier)")
+                    completion(identifier)
+                } else {
+                    print("Error saving photo: \(error?.localizedDescription ?? "Unknown error")")
+                    completion(nil)
                 }
             }
         }
     }
     
-    func sendToAI(pngImage: Data) async throws {
-        print("Sending binary image data...")
-        print("Making network request with deviceId: \(deviceId)...")
-        let base64String = pngImage.base64EncodedString().asJPGBaseURLString()
-        let response = try await networkService.analyzePhoto(deviceId: deviceId, photo: base64String)
-        print("AI Response: \(response)")
+    func saveToSwiftData(photoAssetIdentifier: String, context: ModelContext) {
+        // Create a new UnidentifiedImageModel object and save to SwiftData
+        let unidentifiedImage = UnidentifiedImageModel(
+            photoAssetIdentifier: photoAssetIdentifier,
+            dateTaken: Date()
+        )
+        
+        context.insert(unidentifiedImage)
+        
+        do {
+            try context.save()
+            print("Photo reference saved to SwiftData successfully")
+        } catch {
+            print("Error saving to SwiftData: \(error)")
+        }
     }
     
     func retakePhoto() {
@@ -187,13 +184,13 @@ final class CameraViewModel: NSObject, CameraViewModelProtocol {
     }
 }
 
-extension CameraViewModel: AVCapturePhotoCaptureDelegate, Sendable {
+extension CameraLockViewModel: AVCapturePhotoCaptureDelegate, Sendable {
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: (any Error)?) {
         if let error {
             print(error.localizedDescription)
         }
         
-        guard let imageData = photo.fileDataRepresentation( ) else { return }
+        guard let imageData = photo.fileDataRepresentation() else { return }
         
         guard let provider = CGDataProvider(data: imageData as CFData) else { return }
         guard let cgImage = CGImage(jpegDataProviderSource: provider, decode: nil, shouldInterpolate: true, intent: .defaultIntent) else { return }
@@ -201,30 +198,21 @@ extension CameraViewModel: AVCapturePhotoCaptureDelegate, Sendable {
         Task(priority: .background) {
             let image = await UIImage(cgImage: cgImage, scale: 1, orientation: UIDevice.current.orientation.uiImageOrientation)
             let imageData = image.jpegData(compressionQuality: 0.9)
-            guard let imagePng = imageData else {
-                throw NetworkError.invalidURL
-            }
+            guard let imagePng = imageData else { return }
             let resizedImage = ImageResize.resize(imageData: imagePng)
             
-            // Auto-save to Photos
+            // Auto-save to Photos and get identifier for SwiftData
             await MainActor.run {
-                self.saveToPhotos(image: image)
-            }
-            
-            // Send to AI (async call)
-            do {
-                try await self.sendToAI(pngImage: resizedImage)
-            } catch {
-                print("Error sending to AI: \(error)")
+                self.saveToPhotos(image: image) { [weak self] assetIdentifier in
+                    if let identifier = assetIdentifier {
+                        self?.onPhotoCapture?(identifier)
+                    }
+                }
             }
             
             await MainActor.run {
                 withAnimation {
-                    if let imageData {
-                        self.photoCaptureState = .finished(imageData)
-                    } else {
-                        print("error occured while capturing photo")
-                    }
+                    self.photoCaptureState = .finished(resizedImage)
                 }
                 
                 // Reset state after brief delay to allow animation

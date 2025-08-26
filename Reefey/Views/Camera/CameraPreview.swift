@@ -1,8 +1,12 @@
 import SwiftUI
 import AVFoundation
 
-struct CameraPreview: UIViewRepresentable {
-    @Binding var cameraVM: CameraViewModel
+protocol CameraViewModelProtocol: AnyObject {
+    var session: AVCaptureSession { get }
+}
+
+struct CameraPreview<T: CameraViewModelProtocol>: UIViewRepresentable {
+    @Binding var cameraVM: T
 
     func makeUIView(context: Context) -> PreviewView {
         let v = PreviewView()

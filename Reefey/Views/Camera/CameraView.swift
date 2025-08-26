@@ -13,6 +13,9 @@ struct CameraView: View {
     @Binding var cameraShow: Bool
     @State private var selectedItem: PhotosPickerItem?
     @State private var selectedImage: UIImage?
+    
+    @State private var isShowIdentifyDialog = false
+    @State private var identifyDialogState: IdentifyDialogEnum = .LOADING
     var body: some View {
         ZStack {
             cameraPreview
@@ -81,6 +84,9 @@ struct CameraView: View {
                 .frame(maxWidth: .infinity)
                 .background(.ultraThinMaterial)
             }
+            if isShowIdentifyDialog {
+                IdentifyDialogView(identifyDialogState: $identifyDialogState)
+            }
         }
         .onChange(of: selectedItem) { _, newItem in
             Task {
@@ -98,7 +104,7 @@ struct CameraView: View {
         }
     }
     private var cameraPreview: some View {
-        CameraPreview(cameraVM: $VM)
+        CameraPreview<CameraViewModel>(cameraVM: $VM)
             .ignoresSafeArea()
             .onAppear {
                 VM.requestAccessAndSetup()
