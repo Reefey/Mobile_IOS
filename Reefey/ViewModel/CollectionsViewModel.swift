@@ -78,11 +78,13 @@ class CollectionsViewModel {
                 hasMoreData = response.pagination?.hasNext ?? false
                 currentPage += 1
             } else {
-                errorMessage = response.error ?? "Failed to load collections"
+                // Don't show error message, just log it
+                print("Failed to load collections: \(response.error ?? "Unknown error")")
             }
             
         } catch {
-            errorMessage = error.localizedDescription
+            // Don't show error message, just log it
+            print("Error loading collections: \(error.localizedDescription)")
         }
         
         isLoading = false
@@ -136,7 +138,7 @@ class CollectionsViewModel {
                 collections[index] = updatedCollection
             }
         } catch {
-            errorMessage = "Failed to update favorite: \(error.localizedDescription)"
+            print("Failed to update favorite: \(error.localizedDescription)")
         }
     }
     
@@ -157,7 +159,7 @@ class CollectionsViewModel {
             collections.insert(newCollection, at: 0)
             return true
         } catch {
-            errorMessage = "Failed to create collection: \(error.localizedDescription)"
+            print("Failed to create collection: \(error.localizedDescription)")
             return false
         }
     }
@@ -168,7 +170,7 @@ class CollectionsViewModel {
             try await networkService.deleteCollection(deviceId: deviceId, id: collection.id)
             collections.removeAll { $0.id == collection.id }
         } catch {
-            errorMessage = "Failed to delete collection: \(error.localizedDescription)"
+            print("Failed to delete collection: \(error.localizedDescription)")
         }
     }
     

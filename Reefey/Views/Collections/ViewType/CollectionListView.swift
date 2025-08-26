@@ -11,20 +11,52 @@ struct CollectionListView: View {
     @Binding var path: [NavigationPath]
     
     var body: some View {
-        ScrollView {
-            LazyVStack(spacing: 12) {
-                // Card to be identified
+        if collections.isEmpty {
+            // Empty state
+            VStack(spacing: 24) {
+                Spacer()
+                
+                // Card to be identified (always show this)
                 CardToBeIdentified()
                     .padding(.horizontal, 16)
+                    .padding(.bottom, 32)
+                
+                Spacer()
+                
+                VStack(spacing: 16) {
+                    Image(systemName: "fish.fill")
+                        .font(.system(size: 64))
+                        .foregroundColor(.gray.opacity(0.6))
+                    
+                    VStack(spacing: 8) {
+                        Text("No collections yet")
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.primary)
+                        
+                        Text("Start by adding your first marine creature to your collection")
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 32)
+                    }
+                }
+            }
+        } else {
+            List {
+                // Card to be identified
+                CardToBeIdentified()
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                 
                 // Collections list
                 ForEach(collections) { collection in
                     CollectionListItem(collection: collection) {
                         path.append(.collectionDetail(collection))
                     }
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                 }
             }
-            .padding(.vertical, 8)
+            .listStyle(.plain)
         }
     }
 }
@@ -35,7 +67,7 @@ struct CollectionListItem: View {
     
     var body: some View {
         Button(action: onTap) {
-            HStack(alignment: .top, spacing: 16) {
+            HStack(alignment: .top, spacing: 20) {
                 // Collection Image
                 ZStack {
                     if let imageURL = collection.marineImageUrl {
@@ -54,65 +86,57 @@ struct CollectionListItem: View {
                             .aspectRatio(contentMode: .fill)
                     }
                 }
-                .frame(width: 100, height: 100)
+                .frame(width: 120, height: 118)
                 .clipped()
-                .cornerRadius(12)
+                .cornerRadius(20)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(Color.gray, lineWidth: 1)
                 )
                 
                 // Collection Info
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading) {
                     // Title
                     Text(collection.species)
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.title2)
                         .foregroundColor(.primary)
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
                     
                     // Scientific Name
                     Text(collection.scientificName)
-                        .font(.system(size: 14))
+                        .font(.body)
                         .foregroundColor(.secondary)
                         .italic()
                         .lineLimit(1)
                     
                     // Rarity indicators
-                    HStack(spacing: 4) {
+                    HStack {
                         ForEach(1...5, id: \.self) { rarity in
-                            Image(systemName: "circle.fill")
+                            Image(systemName: "questionmark.circle.fill")
                                 .resizable()
                                 .scaledToFit()
-                                .foregroundStyle(rarity <= collection.rarity ? Color.blue : Color.gray.opacity(0.3))
-                                .frame(width: 16, height: 16)
+                                .foregroundStyle(rarity <= collection.rarity ? getRarityColor(rarity) : Color.gray.opacity(0.3))
+                                .frame(width: 30, height: 30)
                         }
-                        
-                        Spacer()
-                        
-                        Text("\(collection.totalPhotos) photos")
-                            .font(.system(size: 12))
-                            .foregroundColor(.secondary)
                     }
                 }
                 
                 Spacer()
-                
-                // Status indicator
-                Text(collection.status)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(collection.status == "identified" ? Color.green : Color.orange)
-                    .cornerRadius(8)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background(Color.gray.opacity(0.05))
-            .cornerRadius(12)
         }
         .buttonStyle(PlainButtonStyle())
+    }
+    
+    private func getRarityColor(_ rarity: Int) -> Color {
+        switch rarity {
+        case 1: return Color(hex: "#CE5656") // Red
+        case 2: return Color(hex: "#D89F65") // Orange
+        case 3: return Color(hex: "#61C361") // Green
+        case 4: return Color(hex: "#9948C2") // Purple
+        case 5: return Color(hex: "#0FAAAC") // Teal
+        default: return Color.gray
+        }
     }
 }
 

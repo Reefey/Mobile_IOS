@@ -7,20 +7,20 @@ struct MarineSpecies: Identifiable, Codable, Hashable {
     let scientificName: String
     let category: String
     let rarity: Int
-    let sizeMinCm: Double
-    let sizeMaxCm: Double
+    let sizeMinCm: Double?
+    let sizeMaxCm: Double?
     let habitatType: [String]
-    let diet: String
-    let behavior: String
+    let diet: String?
+    let behavior: String?
     let danger: String
     let venomous: Bool
     let description: String
-    let marineImage: String?
-    let lifeSpan: String
-    let reproduction: String
-    let migration: String
-    let endangered: String
-    let funFact: String
+    let imageUrl: String?
+    let lifeSpan: String?
+    let reproduction: String?
+    let migration: String?
+    let endangered: String?
+    let funFact: String?
     let foundAtSpots: [MarineSpot]?
     let totalSpots: Int?
     
@@ -38,7 +38,7 @@ struct MarineSpecies: Identifiable, Codable, Hashable {
         case danger
         case venomous
         case description
-        case marineImage
+        case imageUrl
         case lifeSpan
         case reproduction
         case migration
@@ -51,18 +51,12 @@ struct MarineSpecies: Identifiable, Codable, Hashable {
 
 struct MarineSpot: Codable, Hashable {
     let spotId: Int
-    let spotName: String
-    let lat: Double
-    let lng: Double
     let frequency: String
     let seasonality: String
     let notes: String?
     
     enum CodingKeys: String, CodingKey {
         case spotId
-        case spotName
-        case lat
-        case lng
         case frequency
         case seasonality
         case notes
@@ -175,19 +169,19 @@ struct CreateMarineRequest: Codable {
     let scientificName: String
     let category: String
     let rarity: Int
-    let sizeMinCm: Double
-    let sizeMaxCm: Double
+    let sizeMinCm: Double?
+    let sizeMaxCm: Double?
     let habitatType: [String]
-    let diet: String
-    let behavior: String
+    let diet: String?
+    let behavior: String?
     let danger: String
     let venomous: Bool
     let description: String
-    let lifeSpan: String
-    let reproduction: String
-    let migration: String
-    let endangered: String
-    let funFact: String
+    let lifeSpan: String?
+    let reproduction: String?
+    let migration: String?
+    let endangered: String?
+    let funFact: String?
     
     enum CodingKeys: String, CodingKey {
         case name

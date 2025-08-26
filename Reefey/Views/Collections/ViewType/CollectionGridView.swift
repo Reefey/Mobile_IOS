@@ -16,20 +16,53 @@ struct CollectionGridView: View {
     ]
     
     var body: some View {
-        VStack(spacing: 10) {
-            // Card to be identified
-            CardToBeIdentified()
-                .padding(.horizontal, 4)
-            
-            // Collections grid
-            LazyVGrid(columns: columns, spacing: 10) {
-                ForEach(collections) { collection in
-                    CollectionGridItem(collection: collection) {
-                        path.append(.collectionDetail(collection))
+        if collections.isEmpty {
+            // Empty state
+            VStack(spacing: 24) {
+                Spacer()
+                
+                // Card to be identified (always show this)
+                CardToBeIdentified()
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 32)
+                
+                Spacer()
+                
+                VStack(spacing: 16) {
+                    Image(systemName: "fish.fill")
+                        .font(.system(size: 64))
+                        .foregroundColor(.gray.opacity(0.6))
+                    
+                    VStack(spacing: 8) {
+                        Text("No collections yet")
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.primary)
+                        
+                        Text("Start by adding your first marine creature to your collection")
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 32)
                     }
                 }
             }
-            .padding(.horizontal, 4)
+        } else {
+            VStack(spacing: 10) {
+                // Card to be identified
+                CardToBeIdentified()
+                    .padding(.horizontal, 4)
+                
+                // Collections grid
+                LazyVGrid(columns: columns, spacing: 10) {
+                    ForEach(collections) { collection in
+                        CollectionGridItem(collection: collection) {
+                            path.append(.collectionDetail(collection))
+                        }
+                    }
+                }
+                .padding(.horizontal, 4)
+            }
         }
     }
 }

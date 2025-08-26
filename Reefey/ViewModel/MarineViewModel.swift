@@ -164,14 +164,25 @@ class MarineViewModel {
     }
     
     func sizeText(for species: MarineSpecies) -> String {
-        if species.sizeMinCm == species.sizeMaxCm {
-            return "\(Int(species.sizeMinCm)) cm"
+        guard let sizeMin = species.sizeMinCm else {
+            return "Size unknown"
+        }
+        
+        if let sizeMax = species.sizeMaxCm {
+            if sizeMin == sizeMax {
+                return "\(Int(sizeMin)) cm"
+            } else {
+                return "\(Int(sizeMin))-\(Int(sizeMax)) cm"
+            }
         } else {
-            return "\(Int(species.sizeMinCm))-\(Int(species.sizeMaxCm)) cm"
+            return "\(Int(sizeMin))+ cm"
         }
     }
     
     func habitatText(for species: MarineSpecies) -> String {
+        if species.habitatType.isEmpty {
+            return "Habitat information not available"
+        }
         return species.habitatType.joined(separator: ", ")
     }
 }
