@@ -1,15 +1,10 @@
-//
-//  CollectionDetailView.swift
-//  Reefey
-//
-//  Created by Reza Juliandri on 23/08/25.
-//
-
 import SwiftUI
 
+// MARK: - Collection Detail View
 struct CollectionDetailView: View {
     let collection: Collection
     @Environment(\.dismiss) private var dismiss
+    
     @State private var selectedTab = 0
     @State private var showingImageDetail = false
     @State private var selectedImageIndex = 0
@@ -34,14 +29,13 @@ struct CollectionDetailView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button(action: {
-                    // This will trigger the back navigation
                     dismiss()
                 }) {
                     HStack(spacing: 4) {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 16, weight: .medium))
                         Text("Back")
-                            .font(.system(size: 17, weight: .medium))
+                            .font(.system(size: 16, weight: .medium))
                     }
                     .foregroundColor(.white)
                 }
@@ -59,26 +53,36 @@ struct CollectionDetailView: View {
     private var headerSection: some View {
         ZStack {
             // Main header image
-            Group {
-                if let imageURL = collection.marineImageUrl, !imageURL.isEmpty {
-                    AsyncImage(url: URL(string: imageURL)) { image in
-                        image
-                            .resizable()
-                            .scaledToFill()
-                    } placeholder: {
-                        Image("tuna")
-                            .resizable()
-                            .scaledToFill()
-                    }
-                } else {
-                    Image("tuna")
+            if let imageURL = collection.marineImageUrl {
+                AsyncImage(url: URL(string: imageURL)) { image in
+                    image
                         .resizable()
                         .scaledToFill()
+                } placeholder: {
+                    headerPlaceholder
                 }
+            } else {
+                headerPlaceholder
             }
-            .clipped()
-            .frame(maxHeight: 300)
         }
+        .frame(maxHeight: 300)
+        .clipped()
+    }
+    
+    private var headerPlaceholder: some View {
+        Rectangle()
+            .fill(
+                LinearGradient(
+                    colors: [.gray.opacity(0.4), .gray.opacity(0.2)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+            .overlay(
+                Image(systemName: "fish.fill")
+                    .font(.system(size: 60))
+                    .foregroundColor(.white.opacity(0.6))
+            )
     }
     
     private var tabSelectionView: some View {
@@ -192,7 +196,10 @@ struct CollectionDetailView: View {
         }
         .background(Color(UIColor.systemBackground))
     }
+    
 }
+
+// MARK: - Supporting Views
 
 struct CollectionPhotoView: View {
     let photo: CollectionPhoto
@@ -234,23 +241,21 @@ struct InfoSectionView: View {
     let content: [(String, String)]
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 16) {
             Text(title)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.secondary)
-                .textCase(.uppercase)
-                .tracking(0.5)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundColor(.primary)
             
-            VStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: 12) {
                 ForEach(content, id: \.0) { item in
-                    HStack {
+                    HStack(alignment: .top) {
                         Text(item.0)
-                            .font(.subheadline)
+                            .font(.system(size: 14, weight: .medium))
                             .foregroundColor(.secondary)
                             .frame(width: 100, alignment: .leading)
                         
                         Text(item.1)
-                            .font(.subheadline)
+                            .font(.system(size: 14))
                             .foregroundColor(.primary)
                             .multilineTextAlignment(.leading)
                         
@@ -258,12 +263,8 @@ struct InfoSectionView: View {
                     }
                 }
             }
-            
-            if content.count > 1 {
-                Divider()
-                    .padding(.top, 8)
-            }
         }
+        .padding(.vertical, 8)
     }
 }
 
@@ -281,15 +282,15 @@ struct ImageDetailView: View {
                             image
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
+                                .onTapGesture {
+                                    isPresented = false
+                                }
                         } placeholder: {
                             ProgressView()
                                 .progressViewStyle(CircularProgressViewStyle(tint: .white))
                         }
                     }
                     .tag(index)
-                    .onTapGesture {
-                        isPresented = false
-                    }
                 }
             }
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .automatic))
@@ -312,36 +313,29 @@ struct ImageDetailView: View {
     }
 }
 
+
+
 #Preview {
-    CollectionDetailView(collection: Collection(
+    let sampleCollection = Collection(
         id: 1,
-        deviceId: "test-device",
-        marineId: 60,
+        deviceId: "sample-device",
+        marineId: 123,
         species: "Bluefin Tuna",
         scientificName: "Thunnus thynnus",
-        rarity: 3,
-        sizeMinCm: 200.0,
-        sizeMaxCm: 400.0,
-        habitatType: ["Open Ocean", "Deep Water"],
+        rarity: 5,
+        sizeMinCm: 200,
+        sizeMaxCm: 400,
+        habitatType: ["Deep Ocean", "Open Water"],
         diet: "Fish and squid",
         behavior: "Fast swimming predator",
-        description: "AI-identified as Bluefin Tuna (Thunnus thynnus)",
+        description: "A large, fast-swimming fish found in the Atlantic Ocean and Mediterranean Sea.",
         marineImageUrl: nil,
-        photos: [
-            CollectionPhoto(
-                id: 1,
-                url: "https://example.com/photo1.jpg",
-                annotatedUrl: nil,
-                dateFound: "2025-08-25T07:24:24.45+00:00",
-                spotId: 1,
-                confidence: 0.95,
-                boundingBox: BoundingBox(x: 0.25, y: 0.35, width: 0.45, height: 0.3),
-                spots: nil
-            )
-        ],
-        totalPhotos: 1,
-        firstSeen: "2025-08-25T07:24:24.367+00:00",
-        lastSeen: "2025-08-25T07:24:24.367+00:00",
-        status: "identified"
-    ))
+        photos: [],
+        totalPhotos: 15,
+        firstSeen: "2025-01-15T10:00:00Z",
+        lastSeen: "2025-08-20T15:30:00Z",
+        status: "Endangered"
+    )
+    
+    CollectionDetailView(collection: sampleCollection)
 }
