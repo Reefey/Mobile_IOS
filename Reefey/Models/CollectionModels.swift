@@ -215,3 +215,44 @@ struct UpdateCollectionRequest: Codable {
         case notes
     }
 }
+
+struct AnalyzePhoto: Codable {
+    let detections: [Detection]
+    let unknownSpecies: [UnknownSpecies]
+    let originalPhotoUrl: String
+    let annotationPhotoUrl: String
+    let collectionEntries: [CollectionEntry]
+}
+
+struct Detection: Codable {
+    var species: String
+    var scientificName: String
+    var confidence: Double
+    var wasInDatabase: Bool
+    var databaseId: Int?
+    var instances: [Instance]
+}
+
+struct Instance: Codable {
+    var boundingBox: BoundingBox
+    var confidence: Double
+}
+struct UnknownSpecies: Codable {
+    var description: String
+    var gptResponse: String
+    var confidence: Double
+    var instances: [Instance]
+}
+
+struct CollectionEntry: Codable {
+    var id: Int
+    var species: String
+    var status: String
+    var photoUrl: String
+    var boundingBox: [String]
+}
+
+struct AnalyzePhotoRequest: Codable {
+    var deviceId: String
+    var photo: String
+}
