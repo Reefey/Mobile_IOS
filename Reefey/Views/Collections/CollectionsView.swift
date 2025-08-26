@@ -68,22 +68,36 @@ struct CollectionsView : View {
             
             // Error overlay
             if let errorMessage = viewModel.errorMessage {
-                VStack {
-                    Text("Error")
-                        .font(.headline)
-                    Text(errorMessage)
-                        .font(.caption)
-                        .multilineTextAlignment(.center)
-                    Button("Retry") {
+                VStack(spacing: 20) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 48))
+                        .foregroundColor(.orange)
+                    
+                    VStack(spacing: 8) {
+                        Text("Oops! Something went wrong")
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.primary)
+                        
+                        Text(errorMessage)
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 20)
+                    }
+                    
+                    Button("Try Again") {
                         Task {
                             await viewModel.loadCollections(refresh: true)
                         }
                     }
                     .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
                 }
-                .padding()
+                .padding(32)
                 .background(.ultraThinMaterial)
-                .cornerRadius(10)
+                .cornerRadius(16)
+                .shadow(radius: 10)
             }
         }
         .searchable(text: $viewModel.searchText)
