@@ -21,6 +21,9 @@ struct Collection: Identifiable, Codable, Hashable {
     let endangered: String?
     let funFact: String?
     let imageUrl: String?
+    let edibility: Bool?
+    let poisonous: Bool?
+    let endangeredd: Bool?
     let createdAt: String?
     let updatedAt: String?
     let inUserCollection: Bool?
@@ -52,6 +55,9 @@ struct Collection: Identifiable, Codable, Hashable {
         case endangered
         case funFact
         case imageUrl
+        case edibility
+        case poisonous
+        case endangeredd
         case createdAt
         case updatedAt
         case inUserCollection

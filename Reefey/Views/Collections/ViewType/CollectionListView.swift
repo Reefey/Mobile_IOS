@@ -137,13 +137,31 @@ struct CollectionListItem: View {
                     
                     // Rarity indicators
                     HStack {
-                        ForEach(1...5, id: \.self) { rarity in
-                            Image(systemName: "questionmark.circle.fill")
+                        if let _ = collection.edibility {
+                            Image("Edible")
                                 .resizable()
                                 .scaledToFit()
-                                .foregroundStyle(rarity <= (collection.rarity ?? 0) ? getRarityColor(rarity) : Color.gray.opacity(0.3))
                                 .frame(width: 30, height: 30)
                         }
+                        if let _ = collection.venomous {
+                            Image("Venomous")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 30, height: 30)
+                        }
+                        if let _ = collection.poisonous {
+                            Image("Poisonous")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 30, height: 30)
+                        }
+                        if let _ = collection.endangeredd {
+                            Image("Endanged")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 30, height: 30)
+                        }
+                        
                     }
                 }
                 
@@ -151,17 +169,6 @@ struct CollectionListItem: View {
             }
         }
         .buttonStyle(PlainButtonStyle())
-    }
-    
-    private func getRarityColor(_ rarity: Int) -> Color {
-        switch rarity {
-        case 1: return Color(hex: "#CE5656") // Red
-        case 2: return Color(hex: "#D89F65") // Orange
-        case 3: return Color(hex: "#61C361") // Green
-        case 4: return Color(hex: "#9948C2") // Purple
-        case 5: return Color(hex: "#0FAAAC") // Teal
-        default: return Color.gray
-        }
     }
 }
 
