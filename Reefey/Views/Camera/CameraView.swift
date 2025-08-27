@@ -32,7 +32,7 @@ struct CameraView: View {
                 Spacer()
                 VStack {
                     HStack {
-                        PhotosPicker(selection: $selectedItem, matching: .images) {
+                        PhotosPicker(selection: $selectedItem, matching: .images, photoLibrary: .shared()) {
                             Circle()
                                 .fill(Color.black.opacity(0.2))
                                 .overlay {
@@ -110,15 +110,22 @@ struct CameraView: View {
         }
         .onChange(of: selectedItem) { _, newItem in
             Task {
-                if let data = try? await newItem?.loadTransferable(type: Data.self),
+                if let newItem,
+                   let assetIdentifier = newItem.itemIdentifier,
+                   let data = try? await newItem.loadTransferable(type: Data.self),
                    let uiImage = UIImage(data: data) {
                     selectedImage = uiImage
-                    // Save to Photos if needed
-                    VM.saveToPhotos(image: uiImage) { assetIdentifier in
-                        if let identifier = assetIdentifier {
-                            print("Photo from picker saved with identifier: \(identifier)")
-                        }
-                    }
+                    
+                    // Show identify dialog for gallery image processing
+                    isShowIdentifyDialog = true
+                    identifyDialogState = .LOADING
+                    
+                    // Process gallery image with same flow as camera
+                    let imageData = uiImage.jpegData(compressionQuality: 0.9) ?? data
+                    let resizedImage = ImageResize.resize(imageData: imageData)
+                    
+                    // Use the same processing flow as camera capture, but with existing asset identifier
+                    VM.handlePhotoCapture(image: uiImage, imageData: imageData, resizedImage: resizedImage, existingAssetIdentifier: assetIdentifier)
                     
                     // Provide feedback
                     let impactFeedback = UIImpactFeedbackGenerator(style: .medium)

@@ -11,8 +11,13 @@ import os.log
 
 extension OSLog {
     private static let subsystem = "com.blublub.Reefey"
-    private static let category = "volume_session"
-    static let audioSession = OSLog(subsystem: OSLog.subsystem, category: OSLog.category)
+    
+    static let audioSession = OSLog(subsystem: subsystem, category: "volume_session")
+    static let camera = OSLog(subsystem: subsystem, category: "camera")
+    static let networking = OSLog(subsystem: subsystem, category: "networking")
+    static let ai = OSLog(subsystem: subsystem, category: "ai")
+    static let storage = OSLog(subsystem: subsystem, category: "storage")
+    static let collections = OSLog(subsystem: subsystem, category: "collections")
 }
 
 /// Write a message to system log.

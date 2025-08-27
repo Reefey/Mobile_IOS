@@ -11,6 +11,7 @@ import UIKit
 import SwiftUI
 import Photos
 import SwiftData
+import os.log
 
 @Observable
 final class CameraViewModel: BaseCameraViewModel {
@@ -44,10 +45,10 @@ final class CameraViewModel: BaseCameraViewModel {
         }) { success, error in
             DispatchQueue.main.async {
                 if success, let identifier = assetIdentifier {
-                    print("Photo saved successfully with identifier: \(identifier)")
+                    logEvent("Photo saved successfully with identifier: \(identifier)", OSLog.storage)
                     completion(identifier)
                 } else {
-                    print("Error saving photo: \(error?.localizedDescription ?? "Unknown error")")
+                    logEvent("Error saving photo: \(error?.localizedDescription ?? "Unknown error")", OSLog.storage)
                     completion(nil)
                 }
             }
@@ -65,21 +66,21 @@ final class CameraViewModel: BaseCameraViewModel {
         
         do {
             try context.save()
-            print("Photo reference saved to SwiftData due to AI failure")
+            logEvent("Photo reference saved to SwiftData due to AI failure", OSLog.storage)
         } catch {
-            print("Error saving to SwiftData: \(error)")
+            logEvent("Error saving to SwiftData: \(error)", OSLog.storage)
         }
     }
     
     func sendToAI(pngImage: Data) async throws -> MarineData {
-        print("Sending binary image data...")
-        print("Making network request with deviceId: \(deviceManager.deviceId)...")
+        logEvent("Sending binary image data...", OSLog.ai)
+        logEvent("Making network request with deviceId: \(deviceManager.deviceId)...", OSLog.networking)
         let base64String = pngImage.base64EncodedString().asJPGBaseURLString()
         let response = try await networkService.analyzePhoto(deviceId: deviceManager.deviceId, photo: base64String)
         
         if response.success {
-            print("AI Response: \(response.data)")
-            print("Message: \(response.message ?? "No message")")
+            logEvent("AI Response: \(response.data.debugDescription)", OSLog.ai)
+            logEvent("Message: \(response.message ?? "No message")", OSLog.ai)
             
             // Check if we have identified species with marine data
             if let data = response.data,
@@ -92,71 +93,80 @@ final class CameraViewModel: BaseCameraViewModel {
                 throw NetworkError.custom("No species identified")
             }
         } else {
-            print("AI Analysis failed: \(response.error ?? "Unknown error")")
+            logEvent("AI Analysis failed: \(response.error ?? "Unknown error")", OSLog.ai)
             throw NetworkError.custom(response.error ?? "AI analysis failed")
         }
     }
     
     // Override template method to handle photo capture for direct AI analysis
-    override func handlePhotoCapture(image: UIImage, imageData: Data, resizedImage: Data) {
-        // Auto-save to Photos and get identifier
-        saveToPhotos(image: image) { [weak self] assetIdentifier in
-            guard let self = self, let identifier = assetIdentifier else { return }
-            
-            // Send to AI (async call)
-            Task {
-                do {
-                    let marineData = try await self.sendToAI(pngImage: resizedImage)
-                    print("AI analysis successful")
-                    await MainActor.run {
-                        self.onAIIdentificationSuccess?(marineData, image)
-                    }
-                } catch {
-                    print("Error sending to AI: \(error)")
-                    
-                    // Check if it's a network connectivity issue
-                    if let networkError = error as? NetworkError {
-                        print("NetworkError detected: \(networkError)")
-                        switch networkError {
-                        case .custom(let message) where message.contains("Rate limit exceeded") || message.contains("RATE_LIMIT_EXCEEDED"):
-                            // Rate limit exceeded - show rate limit dialog
-                            print("Rate limit detected with message: \(message)")
-                            await MainActor.run {
-                                self.onAIFailure?(identifier)
-                                self.onRateLimitExceeded?()
-                            }
-                        case .httpError(let statusCode) where statusCode == 429:
-                            // Rate limit exceeded (HTTP 429) - show rate limit dialog
-                            print("HTTP 429 Rate limit detected")
-                            await MainActor.run {
-                                self.onAIFailure?(identifier)
-                                self.onRateLimitExceeded?()
-                            }
-                        case .invalidURL, .invalidResponse, .httpError, .noData:
-                            // Network connectivity issues - show offline dialog
-                            await MainActor.run {
-                                self.onAIFailure?(identifier)
-                                self.onNetworkUnavailable?()
-                            }
-                        case .decodingError, .custom:
-                            // AI processing issues - show unidentified dialog
-                            await MainActor.run {
-                                self.onAIFailure?(identifier)
-                                self.onAIUnidentified?()
-                            }
-                        }
-                    } else if (error as NSError).domain == NSURLErrorDomain {
-                        // URL loading system errors (network issues)
+    override func handlePhotoCapture(image: UIImage, imageData: Data, resizedImage: Data, existingAssetIdentifier: String? = nil) {
+        // Use existing identifier for gallery images, or save to Photos for camera images
+        if let existingIdentifier = existingAssetIdentifier {
+            // Gallery image - use existing asset identifier
+            processImageWithAI(image: image, resizedImage: resizedImage, assetIdentifier: existingIdentifier)
+        } else {
+            // Camera image - save to Photos first then get identifier
+            saveToPhotos(image: image) { [weak self] assetIdentifier in
+                guard let self = self, let identifier = assetIdentifier else { return }
+                self.processImageWithAI(image: image, resizedImage: resizedImage, assetIdentifier: identifier)
+            }
+        }
+    }
+    
+    private func processImageWithAI(image: UIImage, resizedImage: Data, assetIdentifier: String) {
+        // Send to AI (async call)
+        Task {
+            do {
+                let marineData = try await self.sendToAI(pngImage: resizedImage)
+                logEvent("AI analysis successful", OSLog.ai)
+                await MainActor.run {
+                    self.onAIIdentificationSuccess?(marineData, image)
+                }
+            } catch {
+                logEvent("Error sending to AI: \(error)", OSLog.ai)
+                
+                // Check if it's a network connectivity issue
+                if let networkError = error as? NetworkError {
+                    logEvent("NetworkError detected: \(networkError)", OSLog.networking)
+                    switch networkError {
+                    case .custom(let message) where message.contains("Rate limit exceeded") || message.contains("RATE_LIMIT_EXCEEDED"):
+                        // Rate limit exceeded - show rate limit dialog
+                        logEvent("Rate limit detected with message: \(message)", OSLog.networking)
                         await MainActor.run {
-                            self.onAIFailure?(identifier)
+                            self.onAIFailure?(assetIdentifier)
+                            self.onRateLimitExceeded?()
+                        }
+                    case .httpError(let statusCode) where statusCode == 429:
+                        // Rate limit exceeded (HTTP 429) - show rate limit dialog
+                        logEvent("HTTP 429 Rate limit detected", OSLog.networking)
+                        await MainActor.run {
+                            self.onAIFailure?(assetIdentifier)
+                            self.onRateLimitExceeded?()
+                        }
+                    case .invalidURL, .invalidResponse, .httpError, .noData:
+                        // Network connectivity issues - show offline dialog
+                        await MainActor.run {
+                            self.onAIFailure?(assetIdentifier)
                             self.onNetworkUnavailable?()
                         }
-                    } else {
-                        // Other errors - treat as unidentified
+                    case .decodingError, .custom:
+                        // AI processing issues - show unidentified dialog
                         await MainActor.run {
-                            self.onAIFailure?(identifier)
+                            self.onAIFailure?(assetIdentifier)
                             self.onAIUnidentified?()
                         }
+                    }
+                } else if (error as NSError).domain == NSURLErrorDomain {
+                    // URL loading system errors (network issues)
+                    await MainActor.run {
+                        self.onAIFailure?(assetIdentifier)
+                        self.onNetworkUnavailable?()
+                    }
+                } else {
+                    // Other errors - treat as unidentified
+                    await MainActor.run {
+                        self.onAIFailure?(assetIdentifier)
+                        self.onAIUnidentified?()
                     }
                 }
             }

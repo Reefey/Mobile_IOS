@@ -10,9 +10,10 @@ import AVFoundation
 import UIKit
 import SwiftUI
 import Photos
+import os.log
 
 @Observable
-class BaseCameraViewModel: NSObject, CameraViewModelProtocol {
+class BaseCameraViewModel: NSObject, CameraViewModelProtocol, @unchecked Sendable {
     
     enum PhotoCaptureState {
         case notStarted
@@ -62,7 +63,7 @@ class BaseCameraViewModel: NSObject, CameraViewModelProtocol {
         case .authorized:
             setup()
         default:
-            print("Other Status")
+            logEvent("Camera authorization status: Other", OSLog.camera)
         }
     }
     
@@ -97,7 +98,7 @@ class BaseCameraViewModel: NSObject, CameraViewModelProtocol {
                 }
             })
         } catch {
-            print(error.localizedDescription)
+            logEvent("Camera setup error: \(error.localizedDescription)", OSLog.camera)
         }
     }
     
@@ -144,15 +145,15 @@ class BaseCameraViewModel: NSObject, CameraViewModelProtocol {
     }
     
     // Template methods to be overridden by subclasses
-    func handlePhotoCapture(image: UIImage, imageData: Data, resizedImage: Data) {
+    func handlePhotoCapture(image: UIImage, imageData: Data, resizedImage: Data, existingAssetIdentifier: String? = nil) {
         // Override in subclasses
     }
 }
 
-extension BaseCameraViewModel: AVCapturePhotoCaptureDelegate, Sendable {
+extension BaseCameraViewModel: AVCapturePhotoCaptureDelegate {
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: (any Error)?) {
         if let error {
-            print(error.localizedDescription)
+            logEvent("Photo capture error: \(error.localizedDescription)", OSLog.camera)
         }
         
         guard let imageData = photo.fileDataRepresentation() else { return }
@@ -168,7 +169,7 @@ extension BaseCameraViewModel: AVCapturePhotoCaptureDelegate, Sendable {
             
             // Call template method for subclass-specific handling
             await MainActor.run {
-                self.handlePhotoCapture(image: image, imageData: imagePng, resizedImage: resizedImage)
+                self.handlePhotoCapture(image: image, imageData: imagePng, resizedImage: resizedImage, existingAssetIdentifier: nil)
             }
             
             await MainActor.run {
