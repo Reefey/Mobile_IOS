@@ -45,43 +45,51 @@ struct DataDialogView: View {
                     // Icon row
                     HStack(spacing: 16) {
                         // Edible icon (fork and knife)
-                        ZStack {
-                            Circle()
-                                .fill(Color.white)
-                                .frame(width: 40, height: 40)
-                            Image(systemName: "fork.knife")
-                                .foregroundColor(Color(hex: "#4CAFA1"))
-                                .font(.system(size: 18))
+                        if marineData.edibility {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.white)
+                                    .frame(width: 40, height: 40)
+                                Image("Edible")
+                                    .font(.system(size: 18))
+                            }
                         }
+                        
                         
                         // Warning icon (hand with lines)
-                        ZStack {
-                            Circle()
-                                .fill(Color.orange)
-                                .frame(width: 40, height: 40)
-                            Image(systemName: "hand.raised")
-                                .foregroundColor(.white)
-                                .font(.system(size: 18))
+                        if marineData.venomous {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.orange)
+                                    .frame(width: 40, height: 40)
+                                Image("Venomous")
+                                    .foregroundColor(.white)
+                                    .font(.system(size: 18))
+                            }
                         }
                         
-                        // Toxic/danger icon (skull)
-                        ZStack {
-                            Circle()
-                                .fill(Color.purple)
-                                .frame(width: 40, height: 40)
-                            Image(systemName: "exclamationmark.triangle")
-                                .foregroundColor(.white)
-                                .font(.system(size: 18))
-                        }
                         
-                        // Not allowed icon (prohibition sign)
-                        ZStack {
-                            Circle()
-                                .fill(Color.red)
-                                .frame(width: 40, height: 40)
-                            Image(systemName: "nosign")
-                                .foregroundColor(.white)
-                                .font(.system(size: 18))
+                        if marineData.poisonous {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.purple)
+                                    .frame(width: 40, height: 40)
+                                Image("Poisonous")
+                                    .foregroundColor(.white)
+                                    .font(.system(size: 18))
+                            }
+                        }
+//                        
+//
+                        if let _ = marineData.endangered {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.red)
+                                    .frame(width: 40, height: 40)
+                                Image("Endanged")
+                                    .foregroundColor(.white)
+                                    .font(.system(size: 18))
+                            }
                         }
                     }
                     
@@ -145,12 +153,14 @@ struct DataDialogView: View {
         diet: "Omnivore",
         behavior: "Territorial",
         danger: "Low",
-        venomous: false,
+        venomous: true,
         description: "A small, colorful fish known for living symbiotically with sea anemones.",
         lifeSpan: "6-10 years",
         reproduction: "Sequential hermaphrodites",
         migration: "None",
         endangered: "Least Concern",
+        edibility: true,
+        poisonous: true,
         funFact: "All clownfish are born male and can change to female when needed!",
         imageUrl: "https://example.com/clownfish.jpg",
         createdAt: "2025-08-26",
