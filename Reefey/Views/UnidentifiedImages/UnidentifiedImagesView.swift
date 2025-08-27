@@ -33,13 +33,14 @@ struct UnidentifiedImagesView: View {
                 // Header
                 headerView
                 
-                // Content
+                // Content - fill remaining space
                 if viewModel.unidentifiedImages.isEmpty {
                     emptyStateView
                 } else {
                     galleryGridView
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .navigationBarHidden(true)
         .onAppear {
@@ -186,25 +187,28 @@ struct UnidentifiedImagesView: View {
     }
     
     private var emptyStateView: some View {
-        VStack(spacing: 20) {
-            Spacer()
-            
-            Image(systemName: "photo.stack")
-                .font(.system(size: 60))
-                .foregroundColor(.gray)
-            
-            Text("No Unidentified Images")
-                .font(.title2)
-                .fontWeight(.semibold)
-                .foregroundColor(.primary)
-            
-            Text("Take photos when offline or when AI fails to see them here for batch identification.")
-                .font(.body)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
-            
-            Spacer()
+        GeometryReader { geometry in
+            VStack(spacing: 20) {
+                Spacer()
+                
+                Image(systemName: "photo.stack")
+                    .font(.system(size: 80))
+                    .foregroundColor(.gray.opacity(0.6))
+                
+                Text("No Unidentified Images")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+                
+                Text("Take photos when offline or when AI fails to see them here for batch identification.")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+                
+                Spacer()
+            }
+            .frame(width: geometry.size.width, height: geometry.size.height)
         }
     }
     
@@ -324,22 +328,43 @@ struct UnidentifiedImageGridItem: View {
                     }
                 }
                 
-                // Processed indicator
-                if imageModel.isProcessed {
-                    VStack {
+                // Status indicators
+                VStack {
+                    Spacer()
+                    
+                    HStack {
                         Spacer()
                         
-                        HStack {
-                            Spacer()
-                            
+                        if imageModel.isProcessed {
+                            // Success indicator
                             Image(systemName: "checkmark.circle.fill")
                                 .foregroundColor(.green)
                                 .font(.title3)
                                 .background(Color.white)
                                 .clipShape(Circle())
+                        } else {
+                            // Failure indicator with retry count
+                            VStack(spacing: 2) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundColor(.orange)
+                                    .font(.caption)
+                                    .background(Color.white)
+                                    .clipShape(Circle())
+                                
+                                if imageModel.retryCount > 0 {
+                                    Text("\(imageModel.retryCount)")
+                                        .font(.caption2)
+                                        .fontWeight(.bold)
+                                        .foregroundColor(.white)
+                                        .padding(.horizontal, 4)
+                                        .padding(.vertical, 2)
+                                        .background(Color.red)
+                                        .clipShape(Circle())
+                                }
+                            }
                         }
-                        .padding(8)
                     }
+                    .padding(8)
                 }
             }
         }

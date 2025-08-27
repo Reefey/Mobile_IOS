@@ -132,6 +132,7 @@ struct CameraView: View {
             .ignoresSafeArea()
             .onAppear {
                 VM.requestAccessAndSetup()
+                VM.setModelContext(modelContext)
                 setupAIFailureCallback()
             }
     }

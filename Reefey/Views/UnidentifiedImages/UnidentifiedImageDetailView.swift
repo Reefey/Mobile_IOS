@@ -36,6 +36,11 @@ struct UnidentifiedImageDetailView: View {
                 // Image display
                 imageDisplayView
                 
+                // Failure information
+                if !imageModel.isProcessed {
+                    failureInfoView
+                }
+                
                 // Action buttons
                 actionButtonsView
             }
@@ -106,6 +111,60 @@ struct UnidentifiedImageDetailView: View {
             }
             .frame(width: geometry.size.width, height: geometry.size.height * 0.7)
         }
+    }
+    
+    private var failureInfoView: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundColor(.orange)
+                Text("Identification Failed")
+                    .font(.headline)
+                    .foregroundColor(.orange)
+            }
+            
+            VStack(alignment: .leading, spacing: 8) {
+                if let failureReason = imageModel.failureReason {
+                    HStack {
+                        Text("Reason:")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Text(failureReason)
+                            .font(.subheadline)
+                            .foregroundColor(.primary)
+                    }
+                }
+                
+                HStack {
+                    Text("Retry Count:")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    Text("\(imageModel.retryCount)")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(imageModel.retryCount > 0 ? .red : .primary)
+                }
+                
+                if let lastAttempt = imageModel.lastAttemptDate {
+                    HStack {
+                        Text("Last Attempt:")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Text(lastAttempt, style: .time)
+                            .font(.subheadline)
+                            .foregroundColor(.primary)
+                    }
+                }
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
+        .background(Color.orange.opacity(0.1))
+        .cornerRadius(12)
+        .padding(.horizontal, 20)
     }
     
     private var actionButtonsView: some View {

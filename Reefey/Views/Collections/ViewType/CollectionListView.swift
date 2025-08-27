@@ -14,7 +14,6 @@ struct CollectionListView: View {
         if collections.isEmpty {
             // Empty state
             VStack(spacing: 24) {
-                Spacer()
                 
                 // Card to be identified (always show this)
                 CardToBeIdentified(path: $path)

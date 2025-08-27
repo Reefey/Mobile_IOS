@@ -10,7 +10,8 @@ import SwiftUI
 extension CameraView {
     func setupAIFailureCallback() {
         VM.onAIFailure = { [self] assetIdentifier in
-            VM.saveToSwiftData(photoAssetIdentifier: assetIdentifier, context: modelContext)
+            // SwiftData saving is now handled in CameraViewModel
+            print("AI failure callback triggered for asset: \(assetIdentifier)")
         }
         
         VM.onAIProcessingComplete = { [self] in
