@@ -46,6 +46,11 @@ struct CollectionsView : View {
                     .padding(.bottom)
                 }
                 .padding(.horizontal)
+
+                // Card to be identified (always show this)
+                CardToBeIdentified(path: $path)
+                    .padding(.horizontal, 16)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                 
                 // Content
                 if viewModel.isLoading && viewModel.collections.isEmpty {
@@ -210,6 +215,7 @@ struct CollectionsView : View {
     // MARK: - Empty State View
     private var emptyStateView: some View {
         VStack(spacing: 24) {
+            
             Spacer()
             
             VStack(spacing: 16) {

@@ -20,10 +20,6 @@ struct CollectionGridView: View {
         VStack(spacing: 10) {
             
             if collections.isEmpty {
-                // Card to be identified (always show this)
-                CardToBeIdentified(path: $path)
-                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-
                 // Empty state
                 VStack(spacing: 20) {
                     Image(systemName: "photo.on.rectangle.angled")
@@ -43,10 +39,6 @@ struct CollectionGridView: View {
                 }
                 .padding(.top, 60)
             } else {
-                // Card to be identified
-                CardToBeIdentified(path: $path)
-                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-
                 // Collections grid
                 LazyVGrid(columns: columns, spacing: 10) {
                     ForEach(collections) { collection in

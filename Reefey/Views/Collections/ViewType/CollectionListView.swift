@@ -15,10 +15,6 @@ struct CollectionListView: View {
             // Empty state
             VStack(spacing: 24) {
                 
-                // Card to be identified (always show this)
-                CardToBeIdentified(path: $path)
-                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                
                 Spacer()
                 
                 VStack(spacing: 16) {
@@ -42,10 +38,6 @@ struct CollectionListView: View {
             }
         } else {
             List {
-                // Card to be identified
-                CardToBeIdentified(path: $path)
-                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                
                 // Collections list
                 ForEach(collections) { collection in
                     CollectionListItem(collection: collection) {
