@@ -98,7 +98,19 @@ struct CameraView: View {
                 .background(.ultraThinMaterial)
             }
             if isShowIdentifyDialog {
-                IdentifyDialogView(identifyDialogState: $identifyDialogState, isShowIdentifyDialog: $isShowIdentifyDialog, path: $path)
+                IdentifyDialogView(
+                    identifyDialogState: $identifyDialogState, 
+                    isShowIdentifyDialog: $isShowIdentifyDialog, 
+                    path: $path,
+                    onViewDetailTapped: { marineId in
+                        // Close the camera sheet first
+                        cameraShow = false
+                        // Then navigate to detail after a small delay to ensure sheet is dismissed
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            path = [.marineDetail(marineId)]
+                        }
+                    }
+                )
             }
         }
         .onAppear {

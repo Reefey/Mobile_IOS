@@ -4,6 +4,7 @@ struct IdentifyDialogView: View {
     @Binding var identifyDialogState: IdentifyDialogEnum
     @Binding var isShowIdentifyDialog: Bool
     @Binding var path: [NavigationPath]
+    var onViewDetailTapped: ((Int) -> Void)?
     
     var body: some View {
         ZStack {
@@ -14,7 +15,8 @@ struct IdentifyDialogView: View {
                         marineData: marineData, 
                         capturedImage: identifyDialogState.getIdentifyDialogData().capturedImage,
                         isShowIdentifyDialog: $isShowIdentifyDialog,
-                        path: $path
+                        path: $path,
+                        onViewDetailTapped: onViewDetailTapped
                     )
                 } else {
                     NotificationDialogView(

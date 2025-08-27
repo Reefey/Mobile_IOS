@@ -11,6 +11,7 @@ struct DataDialogView: View {
     var capturedImage: UIImage?
     @Binding var isShowIdentifyDialog: Bool
     @Binding var path: [NavigationPath]
+    var onViewDetailTapped: ((Int) -> Void)?
     var body: some View {
         HStack {
             Spacer()
@@ -96,10 +97,15 @@ struct DataDialogView: View {
                     
                     // View details button
                     Button(action: {
-                        // Navigate using marine data ID to load collection details
-                        print("DEBUG: Navigating to marine detail with ID: \(marineData.id)")
-                        path.append(.marineDetail(marineData.id))
-                        print("DEBUG: Current path count: \(path.count)")
+                        // Use callback if provided, otherwise fallback to direct navigation
+                        if let onViewDetailTapped = onViewDetailTapped {
+                            onViewDetailTapped(marineData.id)
+                        } else {
+                            // Fallback - Navigate using marine data ID to load collection details
+                            print("DEBUG: Navigating to marine detail with ID: \(marineData.id)")
+                            path = [.marineDetail(marineData.id)]
+                            print("DEBUG: Current path count: \(path.count)")
+                        }
                         // Close the dialog
                         isShowIdentifyDialog = false
                     }) {
@@ -175,6 +181,7 @@ struct DataDialogView: View {
         ),
         capturedImage: nil,
         isShowIdentifyDialog: .constant(true),
-        path: .constant([])
+        path: .constant([]),
+        onViewDetailTapped: nil
     )
 }
