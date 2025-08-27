@@ -98,7 +98,7 @@ struct CameraView: View {
                 .background(.ultraThinMaterial)
             }
             if isShowIdentifyDialog {
-                IdentifyDialogView(identifyDialogState: $identifyDialogState, isShowIdentifyDialog: $isShowIdentifyDialog)
+                IdentifyDialogView(identifyDialogState: $identifyDialogState, isShowIdentifyDialog: $isShowIdentifyDialog, path: $path)
             }
         }
         .onAppear {

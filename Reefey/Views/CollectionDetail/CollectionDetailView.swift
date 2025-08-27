@@ -1,5 +1,75 @@
 import SwiftUI
 
+// MARK: - Collection Detail View With Loader
+struct CollectionDetailViewWithLoader: View {
+    let marineId: Int
+    @State private var viewModel = CollectionDetailViewModel()
+    @State private var isLoading = true
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        VStack {
+            if isLoading {
+                VStack {
+                    Spacer()
+                    ProgressView("Loading collection details...")
+                        .progressViewStyle(CircularProgressViewStyle(tint: Color(hex: "#4CAFA1")))
+                    Spacer()
+                }
+            } else if let collection = viewModel.collection {
+                CollectionDetailView(collection: collection)
+            } else {
+                VStack {
+                    Spacer()
+                    Text("Failed to load collection details")
+                        .foregroundColor(.secondary)
+                    if let error = viewModel.errorMessage {
+                        Text(error)
+                            .foregroundColor(.red)
+                            .font(.caption)
+                            .padding(.top, 4)
+                    }
+                    Button("Retry") {
+                        Task {
+                            await loadCollectionDetail()
+                        }
+                    }
+                    .padding(.top, 8)
+                    Spacer()
+                }
+            }
+        }
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button(action: {
+                    dismiss()
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 16, weight: .medium))
+                        Text("Back")
+                            .font(.system(size: 16, weight: .medium))
+                    }
+                    .foregroundColor(.white)
+                }
+            }
+        }
+        .onAppear {
+            Task {
+                await loadCollectionDetail()
+            }
+        }
+    }
+    
+    private func loadCollectionDetail() async {
+        isLoading = true
+        let deviceManager = DeviceManager.shared
+        await viewModel.loadCollectionDetail(deviceId: deviceManager.deviceId, id: marineId)
+        isLoading = false
+    }
+}
+
 // MARK: - Collection Detail View
 struct CollectionDetailView: View {
     let collection: Collection

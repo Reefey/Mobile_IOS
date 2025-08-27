@@ -3,6 +3,7 @@ import SwiftUI
 struct IdentifyDialogView: View {
     @Binding var identifyDialogState: IdentifyDialogEnum
     @Binding var isShowIdentifyDialog: Bool
+    @Binding var path: [NavigationPath]
     
     var body: some View {
         ZStack {
@@ -12,7 +13,8 @@ struct IdentifyDialogView: View {
                     DataDialogView(
                         marineData: marineData, 
                         capturedImage: identifyDialogState.getIdentifyDialogData().capturedImage,
-                        isShowIdentifyDialog: $isShowIdentifyDialog
+                        isShowIdentifyDialog: $isShowIdentifyDialog,
+                        path: $path
                     )
                 } else {
                     NotificationDialogView(
@@ -32,5 +34,5 @@ struct IdentifyDialogView: View {
 }
 
 #Preview {
-    IdentifyDialogView(identifyDialogState: .constant(.LOADING), isShowIdentifyDialog: .constant(true))
+    IdentifyDialogView(identifyDialogState: .constant(.LOADING), isShowIdentifyDialog: .constant(true), path: .constant([]))
 }

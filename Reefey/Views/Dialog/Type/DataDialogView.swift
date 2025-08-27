@@ -10,6 +10,7 @@ struct DataDialogView: View {
     var marineData: MarineData
     var capturedImage: UIImage?
     @Binding var isShowIdentifyDialog: Bool
+    @Binding var path: [NavigationPath]
     var body: some View {
         HStack {
             Spacer()
@@ -81,7 +82,7 @@ struct DataDialogView: View {
                         }
 //                        
 //
-                        if let _ = marineData.endangered {
+                        if marineData.endangeredd {
                             ZStack {
                                 Circle()
                                     .fill(Color.red)
@@ -95,7 +96,12 @@ struct DataDialogView: View {
                     
                     // View details button
                     Button(action: {
-                        // Add your action here
+                        // Navigate using marine data ID to load collection details
+                        print("DEBUG: Navigating to marine detail with ID: \(marineData.id)")
+                        path.append(.marineDetail(marineData.id))
+                        print("DEBUG: Current path count: \(path.count)")
+                        // Close the dialog
+                        isShowIdentifyDialog = false
                     }) {
                         HStack {
                             Spacer()
@@ -159,6 +165,7 @@ struct DataDialogView: View {
         reproduction: "Sequential hermaphrodites",
         migration: "None",
         endangered: "Least Concern",
+        endangeredd: true,
         edibility: true,
         poisonous: true,
         funFact: "All clownfish are born male and can change to female when needed!",
@@ -167,6 +174,7 @@ struct DataDialogView: View {
         updatedAt: "2025-08-26"
         ),
         capturedImage: nil,
-        isShowIdentifyDialog: .constant(true)
+        isShowIdentifyDialog: .constant(true),
+        path: .constant([])
     )
 }

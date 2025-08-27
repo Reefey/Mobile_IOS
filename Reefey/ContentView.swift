@@ -11,6 +11,7 @@ import SwiftData
 enum NavigationPath: Hashable {
     case lockedCamera
     case collectionDetail(Collection)
+    case marineDetail(Int) // for navigating with marine data ID to load collection details
 }
 
 struct ContentView: View {
@@ -28,6 +29,8 @@ struct ContentView: View {
                             CameraLockView(path: $navigationPath, cameraShow: $cameraShow)
                         case .collectionDetail(let collection):
                             CollectionDetailView(collection: collection)
+                        case .marineDetail(let marineId):
+                            CollectionDetailViewWithLoader(marineId: marineId)
                         }
                     }
             }

@@ -34,6 +34,7 @@ struct MarineData: Codable {
     let reproduction: String?
     let migration: String?
     let endangered: String?
+    let endangeredd: Bool
     let edibility: Bool
     let poisonous: Bool
     let funFact: String?
