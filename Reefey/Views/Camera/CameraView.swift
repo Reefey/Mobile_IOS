@@ -99,7 +99,7 @@ struct CameraView: View {
                 identifyDialogState = .UNLOCK(
                     viewUnidentifiedAction: {
                         isShowIdentifyDialog = false
-                        // Handle view unidentified images action
+                        path.append(.unidentifiedImages)
                     },
                     dismissAction: {
                         isShowIdentifyDialog = false
@@ -139,6 +139,7 @@ struct CameraView: View {
             .ignoresSafeArea()
             .onAppear {
                 VM.requestAccessAndSetup()
+                VM.setModelContext(modelContext)
                 setupAIFailureCallback()
             }
     }

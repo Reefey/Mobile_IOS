@@ -147,7 +147,8 @@ struct CameraLockView: View {
     
     private func setupSwiftDataCallback() {
         VM.onPhotoCapture = { [self] assetIdentifier in
-            VM.saveToSwiftData(photoAssetIdentifier: assetIdentifier, context: modelContext)
+            // SwiftData saving is now handled in CameraLockViewModel
+            print("Photo capture callback triggered for asset: \(assetIdentifier)")
         }
     }
     

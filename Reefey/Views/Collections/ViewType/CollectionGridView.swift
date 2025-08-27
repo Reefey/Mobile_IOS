@@ -7,52 +7,38 @@
 import SwiftUI
 
 struct CollectionGridView: View {
-    let collections: [Collection]
+    let collections: [MarineSpecies]
     @Binding var path: [NavigationPath]
     
     private let columns = [
+        GridItem(.flexible(), spacing: 10),
         GridItem(.flexible(), spacing: 10),
         GridItem(.flexible(), spacing: 10)
     ]
     
     var body: some View {
-        if collections.isEmpty {
-            // Empty state
-            VStack(spacing: 24) {
-                Spacer()
-                
-                // Card to be identified (always show this)
-                CardToBeIdentified()
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 32)
-                
-                Spacer()
-                
-                VStack(spacing: 16) {
-                    Image(systemName: "fish.fill")
-                        .font(.system(size: 64))
+        VStack(spacing: 10) {
+            
+            if collections.isEmpty {
+                // Empty state
+                VStack(spacing: 20) {
+                    Image(systemName: "photo.on.rectangle.angled")
+                        .font(.system(size: 60))
                         .foregroundColor(.gray.opacity(0.6))
                     
-                    VStack(spacing: 8) {
-                        Text("No collections yet")
-                            .font(.title2)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.primary)
-                        
-                        Text("Start by adding your first marine creature to your collection")
-                            .font(.body)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 32)
-                    }
+                    Text("No collections yet")
+                        .font(.title2)
+                        .fontWeight(.medium)
+                        .foregroundColor(.gray)
+                    
+                    Text("Your marine species collections will appear here")
+                        .font(.body)
+                        .foregroundColor(.gray.opacity(0.8))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
                 }
-            }
-        } else {
-            VStack(spacing: 10) {
-                // Card to be identified
-                CardToBeIdentified()
-                    .padding(.horizontal, 4)
-                
+                .padding(.top, 60)
+            } else {
                 // Collections grid
                 LazyVGrid(columns: columns, spacing: 10) {
                     ForEach(collections) { collection in
@@ -68,7 +54,7 @@ struct CollectionGridView: View {
 }
 
 struct CollectionGridItem: View {
-    let collection: Collection
+    let collection: MarineSpecies
     let onTap: () -> Void
     
     var body: some View {
@@ -76,7 +62,7 @@ struct CollectionGridItem: View {
             VStack(spacing: 0) {
                 // Collection Image
                 ZStack {
-                    if let imageURL = collection.marineImageUrl {
+                    if let imageURL = collection.imageUrl {
                         AsyncImage(url: URL(string: imageURL)) { image in
                             image
                                 .resizable()
@@ -98,7 +84,7 @@ struct CollectionGridItem: View {
                 // Collection Info
                 VStack(alignment: .leading, spacing: 8) {
                     // Title
-                    Text(collection.species)
+                    Text(collection.name)
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.primary)
                         .lineLimit(2)
