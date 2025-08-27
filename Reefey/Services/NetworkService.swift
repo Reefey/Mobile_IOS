@@ -157,7 +157,7 @@ class NetworkService: @unchecked Sendable {
         }
         
         return try await request(
-            endpoint: "/collections/\(deviceId)",
+            endpoint: "/marine/all/\(deviceId)",
             queryItems: queryItems
         )
     }
