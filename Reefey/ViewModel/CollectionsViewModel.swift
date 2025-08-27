@@ -165,6 +165,12 @@ class CollectionsViewModel {
         }
     }
     
+    @MainActor
+    func loadMoreCollections() async {
+        guard hasMoreData && !isLoading else { return }
+        await loadCollections(refresh: false)
+    }
+    
     // MARK: - Helper Methods
     private func updateFilters() {
         filters.category = selectedCategory == "ALL" ? nil : selectedCategory

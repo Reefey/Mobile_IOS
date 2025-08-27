@@ -9,6 +9,9 @@ import SwiftUI
 struct CollectionGridView: View {
     let collections: [Collection]
     @Binding var path: [NavigationPath]
+    let onLoadMore: () async -> Void
+    let hasMoreData: Bool
+    let isLoading: Bool
     
     private let columns = [
         GridItem(.flexible(), spacing: 10),
@@ -59,6 +62,31 @@ struct CollectionGridView: View {
                         CollectionGridItem(collection: collection) {
                             path.append(.collectionDetail(collection))
                         }
+                        .onAppear {
+                            // Load more data when the last few items appear
+                            if collection.id == collections.suffix(4).first?.id && hasMoreData && !isLoading {
+                                Task {
+                                    await onLoadMore()
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Loading indicator for pagination
+                    if isLoading && !collections.isEmpty {
+                        HStack {
+                            Spacer()
+                            VStack(spacing: 8) {
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                                Text("Loading more...")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                        }
+                        .padding(.vertical, 16)
+                        .gridCellColumns(2) // Span across both columns
                     }
                 }
                 .padding(.horizontal, 4)
@@ -140,6 +168,9 @@ struct CollectionGridItem: View {
 #Preview {
     CollectionGridView(
         collections: [],
-        path: .constant([])
+        path: .constant([]),
+        onLoadMore: { },
+        hasMoreData: false,
+        isLoading: false
     )
 }

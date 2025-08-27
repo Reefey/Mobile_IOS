@@ -9,6 +9,9 @@ import SwiftUI
 struct CollectionListView: View {
     let collections: [Collection]
     @Binding var path: [NavigationPath]
+    let onLoadMore: () async -> Void
+    let hasMoreData: Bool
+    let isLoading: Bool
     
     var body: some View {
         if collections.isEmpty {
@@ -54,6 +57,28 @@ struct CollectionListView: View {
                         path.append(.collectionDetail(collection))
                     }
                     .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                    .onAppear {
+                        // Load more data when the last few items appear
+                        if collection.id == collections.suffix(3).first?.id && hasMoreData && !isLoading {
+                            Task {
+                                await onLoadMore()
+                            }
+                        }
+                    }
+                }
+                
+                // Loading indicator for pagination
+                if isLoading && !collections.isEmpty {
+                    HStack {
+                        Spacer()
+                        ProgressView()
+                            .scaleEffect(0.8)
+                        Text("Loading more...")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Spacer()
+                    }
+                    .listRowInsets(EdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16))
                 }
             }
             .listStyle(.plain)
@@ -143,6 +168,9 @@ struct CollectionListItem: View {
 #Preview {
     CollectionListView(
         collections: [],
-        path: .constant([])
+        path: .constant([]),
+        onLoadMore: { },
+        hasMoreData: false,
+        isLoading: false
     )
 }

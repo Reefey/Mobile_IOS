@@ -56,11 +56,27 @@ struct CollectionsView : View {
                     switch selectedView {
                     case .GRID:
                         ScrollView(showsIndicators: false) {
-                            CollectionGridView(collections: viewModel.collections, path: $path)
+                            CollectionGridView(
+                                collections: viewModel.collections,
+                                path: $path,
+                                onLoadMore: {
+                                    await viewModel.loadMoreCollections()
+                                },
+                                hasMoreData: viewModel.hasMoreData,
+                                isLoading: viewModel.isLoading
+                            )
                         }
                         .padding(.horizontal)
                     case .LIST:
-                        CollectionListView(collections: viewModel.collections, path: $path)
+                        CollectionListView(
+                            collections: viewModel.collections,
+                            path: $path,
+                            onLoadMore: {
+                                await viewModel.loadMoreCollections()
+                            },
+                            hasMoreData: viewModel.hasMoreData,
+                            isLoading: viewModel.isLoading
+                        )
                     }
                 }
             }
