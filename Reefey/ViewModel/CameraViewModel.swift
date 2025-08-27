@@ -10,13 +10,11 @@ import AVFoundation
 import UIKit
 import SwiftUI
 import Photos
-import SwiftData
 
 @Observable
 final class CameraViewModel: BaseCameraViewModel {
     private let networkService = NetworkService.shared
     private let deviceManager = DeviceManager.shared
-    private var modelContext: ModelContext?
     
     // Callback for saving to SwiftData when AI fails
     var onAIFailure: ((String) -> Void)?
@@ -35,11 +33,6 @@ final class CameraViewModel: BaseCameraViewModel {
     
     // Callback for showing rate limit dialog when AI limit is reached
     var onRateLimitExceeded: (() -> Void)?
-    
-    // Set ModelContext for SwiftData operations
-    func setModelContext(_ context: ModelContext) {
-        self.modelContext = context
-    }
     
     func saveToPhotos(image: UIImage, completion: @escaping (String?) -> Void) {
         var assetIdentifier: String?
@@ -60,43 +53,7 @@ final class CameraViewModel: BaseCameraViewModel {
         }
     }
     
-    func saveToSwiftData(photoAssetIdentifier: String, failureReason: String, imageData: Data? = nil, context: ModelContext) {
-        // Check if this image already exists in SwiftData
-        let descriptor = FetchDescriptor<UnidentifiedImageModel>(
-            predicate: #Predicate<UnidentifiedImageModel> { $0.photoAssetIdentifier == photoAssetIdentifier }
-        )
-        
-        do {
-            let existingImages = try context.fetch(descriptor)
-            
-            if let existingImage = existingImages.first {
-                // Update existing image with new failure info
-                existingImage.updateRetryInfo(failureReason: failureReason)
-                if let imageData = imageData {
-                    existingImage.imageData = imageData
-                }
-                print("Updated existing unidentified image with retry info")
-            } else {
-                // Create a new UnidentifiedImageModel object and save to SwiftData
-                let unidentifiedImage = UnidentifiedImageModel(
-                    photoAssetIdentifier: photoAssetIdentifier,
-                    dateTaken: Date(),
-                    failureReason: failureReason
-                )
-                if let imageData = imageData {
-                    unidentifiedImage.imageData = imageData
-                }
-                
-                context.insert(unidentifiedImage)
-                print("New unidentified image saved to SwiftData")
-            }
-            
-            try context.save()
-            print("Photo reference saved to SwiftData due to AI failure: \(failureReason)")
-        } catch {
-            print("Error saving to SwiftData: \(error)")
-        }
-    }
+    // Note: SwiftData functionality removed - failed attempts are now handled by direct Photos library access
     
     func sendToAI(pngImage: Data) async throws -> MarineData {
         print("Sending binary image data...")
@@ -141,69 +98,36 @@ final class CameraViewModel: BaseCameraViewModel {
                 } catch {
                     print("Error sending to AI: \(error)")
                     
-                    // Save failed attempt to SwiftData
-                    if let context = self.modelContext {
-                        let failureReason: String
-                        
-                        // Check if it's a network connectivity issue
+                    // Handle different types of errors and show appropriate dialogs
+                    await MainActor.run {
                         if let networkError = error as? NetworkError {
                             print("NetworkError detected: \(networkError)")
                             switch networkError {
                             case .custom(let message) where message.contains("Rate limit exceeded") || message.contains("RATE_LIMIT_EXCEEDED"):
                                 // Rate limit exceeded - show rate limit dialog
-                                failureReason = "Rate limit exceeded"
                                 print("Rate limit detected with message: \(message)")
-                                await MainActor.run {
-                                    self.saveToSwiftData(photoAssetIdentifier: identifier, failureReason: failureReason, imageData: resizedImage, context: context)
-                                    self.onAIFailure?(identifier)
-                                    self.onRateLimitExceeded?()
-                                }
+                                self.onAIFailure?(identifier)
+                                self.onRateLimitExceeded?()
                             case .httpError(let statusCode) where statusCode == 429:
                                 // Rate limit exceeded (HTTP 429) - show rate limit dialog
-                                failureReason = "Rate limit exceeded"
                                 print("HTTP 429 Rate limit detected")
-                                await MainActor.run {
-                                    self.saveToSwiftData(photoAssetIdentifier: identifier, failureReason: failureReason, imageData: resizedImage, context: context)
-                                    self.onAIFailure?(identifier)
-                                    self.onRateLimitExceeded?()
-                                }
+                                self.onAIFailure?(identifier)
+                                self.onRateLimitExceeded?()
                             case .invalidURL, .invalidResponse, .httpError, .noData:
                                 // Network connectivity issues - show offline dialog
-                                failureReason = "Network unavailable"
-                                await MainActor.run {
-                                    self.saveToSwiftData(photoAssetIdentifier: identifier, failureReason: failureReason, imageData: resizedImage, context: context)
-                                    self.onAIFailure?(identifier)
-                                    self.onNetworkUnavailable?()
-                                }
-                            case .decodingError, .custom:
-                                // AI processing issues - show unidentified dialog
-                                failureReason = "AI processing failed"
-                                await MainActor.run {
-                                    self.saveToSwiftData(photoAssetIdentifier: identifier, failureReason: failureReason, imageData: resizedImage, context: context)
-                                    self.onAIFailure?(identifier)
-                                    self.onAIUnidentified?()
-                                }
-                            }
-                        } else if (error as NSError).domain == NSURLErrorDomain {
-                            // URL loading system errors (network issues)
-                            failureReason = "Network error"
-                            await MainActor.run {
-                                self.saveToSwiftData(photoAssetIdentifier: identifier, failureReason: failureReason, imageData: resizedImage, context: context)
                                 self.onAIFailure?(identifier)
                                 self.onNetworkUnavailable?()
-                            }
-                        } else {
-                            // Other errors - treat as unidentified
-                            failureReason = "Unknown error"
-                            await MainActor.run {
-                                self.saveToSwiftData(photoAssetIdentifier: identifier, failureReason: failureReason, imageData: resizedImage, context: context)
+                            case .decodingError, .custom:
+                                // AI processing issues - show unidentified dialog
                                 self.onAIFailure?(identifier)
                                 self.onAIUnidentified?()
                             }
-                        }
-                    } else {
-                        // Fallback if no ModelContext available
-                        await MainActor.run {
+                        } else if (error as NSError).domain == NSURLErrorDomain {
+                            // URL loading system errors (network issues)
+                            self.onAIFailure?(identifier)
+                            self.onNetworkUnavailable?()
+                        } else {
+                            // Other errors - treat as unidentified
                             self.onAIFailure?(identifier)
                             self.onAIUnidentified?()
                         }

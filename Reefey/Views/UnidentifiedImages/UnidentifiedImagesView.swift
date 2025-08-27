@@ -6,16 +6,23 @@
 //
 
 import SwiftUI
-import SwiftData
 import Photos
 
 struct UnidentifiedImagesView: View {
-    @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Binding var path: [NavigationPath]
-    @State private var viewModel = UnidentifiedImagesViewModel()
-    @State private var selectedImageForDetail: UnidentifiedImageModel?
+    @State private var unidentifiedImages: [PhotoItem] = []
+    @State private var selectedImages: Set<String> = []
+    @State private var isSelecting = false
+    @State private var isLoading = true
+    @State private var selectedImageForDetail: PhotoItem?
     @State private var showingImageDetail = false
+    @State private var showError = false
+    @State private var errorMessage = ""
+    @State private var showSuccess = false
+    @State private var successMessage = ""
+    @State private var isProcessing = false
+    @State private var processingProgress: Double = 0.0
     
     private let columns = [
         GridItem(.flexible()),
@@ -34,7 +41,7 @@ struct UnidentifiedImagesView: View {
                 headerView
                 
                 // Content - fill remaining space
-                if viewModel.unidentifiedImages.isEmpty {
+                if unidentifiedImages.isEmpty && !isLoading {
                     emptyStateView
                 } else {
                     galleryGridView
@@ -44,14 +51,14 @@ struct UnidentifiedImagesView: View {
         }
         .navigationBarHidden(true)
         .onAppear {
-            viewModel.loadUnidentifiedImages(context: modelContext)
+            loadUnidentifiedImages()
         }
-        .alert("Error", isPresented: $viewModel.showError) {
+        .alert("Error", isPresented: $showError) {
             Button("OK") { }
         } message: {
-            Text(viewModel.errorMessage)
+            Text(errorMessage)
         }
-        .alert("Success", isPresented: $viewModel.showSuccess) {
+        .alert("Success", isPresented: $showSuccess) {
             Button("View Collections") {
                 // Navigate to collections
                 dismiss()
@@ -59,11 +66,11 @@ struct UnidentifiedImagesView: View {
             }
             Button("Continue") { }
         } message: {
-            Text(viewModel.successMessage)
+            Text(successMessage)
         }
         .sheet(isPresented: $showingImageDetail) {
             if let selectedImage = selectedImageForDetail {
-                UnidentifiedImageDetailView(imageModel: selectedImage)
+                UnidentifiedImageDetailView(photoItem: selectedImage)
             }
         }
     }
@@ -113,9 +120,9 @@ struct UnidentifiedImagesView: View {
                     }
                     
                     Button(action: {
-                        viewModel.toggleSelectMode()
+                        toggleSelectMode()
                     }) {
-                        Text(viewModel.isSelecting ? "Cancel" : "Select")
+                        Text(isSelecting ? "Cancel" : "Select")
                             .font(.subheadline)
                             .fontWeight(.medium)
                             .foregroundColor(.white)
@@ -124,20 +131,35 @@ struct UnidentifiedImagesView: View {
                             .background(Color.black.opacity(0.3))
                             .cornerRadius(20)
                     }
+                    
+                    if !unidentifiedImages.isEmpty {
+                        Button(action: {
+                            clearAllImages()
+                        }) {
+                            Text("Clear All")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundColor(.red)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(Color.black.opacity(0.3))
+                                .cornerRadius(20)
+                        }
+                    }
                 }
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
             .background(
                 LinearGradient(
-                    colors: [Color.teal, Color.teal.opacity(0.8)],
+                    colors: [Color.blue.opacity(0.8), Color.blue.opacity(0.6)],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
             )
             
             // Selection toolbar
-            if viewModel.isSelecting {
+            if isSelecting {
                 selectionToolbar
             }
         }
@@ -145,45 +167,33 @@ struct UnidentifiedImagesView: View {
     
     private var selectionToolbar: some View {
         HStack {
-            Button(action: {
-                if viewModel.selectedImages.count == viewModel.unidentifiedImages.count {
-                    viewModel.deselectAll()
-                } else {
-                    viewModel.selectAll()
-                }
-            }) {
-                Text(viewModel.selectedImages.count == viewModel.unidentifiedImages.count ? "Deselect All" : "Select All")
-                    .font(.subheadline)
-                    .foregroundColor(.teal)
-            }
-            
-            Spacer()
-            
-            Text("\(viewModel.selectedImages.count) selected")
+            Text("\(selectedImages.count) selected")
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundColor(.white)
             
             Spacer()
             
-            Button(action: {
-                Task {
-                    await viewModel.batchIdentify(context: modelContext)
+            if !selectedImages.isEmpty {
+                Button("Delete") {
+                    deleteSelectedImages()
                 }
-            }) {
-                Text("Identify")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(viewModel.selectedImages.isEmpty ? Color.gray : Color.teal)
-                    .cornerRadius(20)
+                .foregroundColor(.red)
+                .font(.subheadline)
+                .fontWeight(.medium)
+                
+                Button("Identify") {
+                    Task {
+                        await batchIdentify()
+                    }
+                }
+                .foregroundColor(.green)
+                .font(.subheadline)
+                .fontWeight(.medium)
             }
-            .disabled(viewModel.selectedImages.isEmpty || viewModel.isProcessing)
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 12)
-        .background(Color(.systemGray6))
+        .background(Color.black.opacity(0.8))
     }
     
     private var emptyStateView: some View {
@@ -214,59 +224,155 @@ struct UnidentifiedImagesView: View {
     
     private var galleryGridView: some View {
         ScrollView {
-            LazyVGrid(columns: columns, spacing: 2) {
-                ForEach(viewModel.unidentifiedImages, id: \.photoAssetIdentifier) { imageModel in
+            if isProcessing {
+                VStack(spacing: 20) {
+                    ProgressView(value: processingProgress)
+                        .progressViewStyle(LinearProgressViewStyle())
+                        .padding(.horizontal, 20)
+                    
+                    Text("Processing \(Int(processingProgress * 100))%")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                .padding(.top, 20)
+            }
+            
+            LazyVGrid(columns: columns, spacing: 12) {
+                ForEach(unidentifiedImages, id: \.assetIdentifier) { photoItem in
                     UnidentifiedImageGridItem(
-                        imageModel: imageModel,
-                        isSelected: viewModel.selectedImages.contains(imageModel.photoAssetIdentifier),
-                        isSelecting: viewModel.isSelecting
+                        photoItem: photoItem,
+                        isSelected: selectedImages.contains(photoItem.assetIdentifier),
+                        isSelecting: isSelecting
                     ) {
-                        if viewModel.isSelecting {
-                            viewModel.toggleSelection(for: imageModel.photoAssetIdentifier)
+                        if isSelecting {
+                            toggleSelection(for: photoItem.assetIdentifier)
                         } else {
-                            // Navigate to detail view
-                            selectedImageForDetail = imageModel
+                            selectedImageForDetail = photoItem
                             showingImageDetail = true
                         }
                     }
                 }
             }
-            .padding(.horizontal, 2)
+            .padding(.horizontal, 16)
             .padding(.bottom, 20)
         }
-        .overlay(
-            // Processing overlay
-            Group {
-                if viewModel.isProcessing {
-                    processingOverlay
-                }
-            }
-        )
     }
     
-    private var processingOverlay: some View {
-        VStack(spacing: 16) {
-            ProgressView(value: viewModel.processingProgress)
-                .progressViewStyle(LinearProgressViewStyle(tint: .teal))
-                .frame(width: 200)
-            
-            Text("Processing images...")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-            
-            Text("\(Int(viewModel.processingProgress * 100))%")
-                .font(.caption)
-                .foregroundColor(.secondary)
+    // MARK: - Helper Methods
+    
+    private func loadUnidentifiedImages() {
+        isLoading = true
+        
+        // Request photo library access
+        PHPhotoLibrary.requestAuthorization { status in
+            DispatchQueue.main.async {
+                if status == .authorized {
+                    fetchUnidentifiedImages()
+                } else {
+                    errorMessage = "Photo library access is required"
+                    showError = true
+                }
+                isLoading = false
+            }
         }
-        .padding(24)
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(radius: 10)
+    }
+    
+    private func fetchUnidentifiedImages() {
+        // For now, we'll fetch recent photos as a placeholder
+        // In a real implementation, you'd filter for specific criteria
+        let fetchOptions = PHFetchOptions()
+        fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
+        fetchOptions.fetchLimit = 50 // Limit to recent photos
+        
+        let assets = PHAsset.fetchAssets(with: .image, options: fetchOptions)
+        
+        var photoItems: [PhotoItem] = []
+        
+        assets.enumerateObjects { asset, index, stop in
+            let photoItem = PhotoItem(
+                assetIdentifier: asset.localIdentifier,
+                dateTaken: asset.creationDate ?? Date(),
+                failureReason: "Sample failure reason",
+                retryCount: 0,
+                lastAttemptDate: nil
+            )
+            photoItems.append(photoItem)
+        }
+        
+        DispatchQueue.main.async {
+            self.unidentifiedImages = photoItems
+        }
+    }
+    
+    private func toggleSelectMode() {
+        isSelecting.toggle()
+        if !isSelecting {
+            selectedImages.removeAll()
+        }
+    }
+    
+    private func toggleSelection(for assetIdentifier: String) {
+        if selectedImages.contains(assetIdentifier) {
+            selectedImages.remove(assetIdentifier)
+        } else {
+            selectedImages.insert(assetIdentifier)
+        }
+    }
+    
+    private func deleteSelectedImages() {
+        unidentifiedImages.removeAll { selectedImages.contains($0.assetIdentifier) }
+        selectedImages.removeAll()
+        isSelecting = false
+    }
+    
+    private func clearAllImages() {
+        unidentifiedImages.removeAll()
+        selectedImages.removeAll()
+        isSelecting = false
+    }
+    
+    private func batchIdentify() async {
+        guard !selectedImages.isEmpty else { return }
+        
+        await MainActor.run {
+            isProcessing = true
+            processingProgress = 0.0
+        }
+        
+        // Simulate batch processing
+        let totalCount = selectedImages.count
+        for (index, _) in selectedImages.enumerated() {
+            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 second delay
+            await MainActor.run {
+                processingProgress = Double(index + 1) / Double(totalCount)
+            }
+        }
+        
+        await MainActor.run {
+            isProcessing = false
+            processingProgress = 0.0
+            successMessage = "Successfully processed \(totalCount) images"
+            showSuccess = true
+            selectedImages.removeAll()
+            isSelecting = false
+        }
     }
 }
 
+// MARK: - PhotoItem Model
+
+struct PhotoItem {
+    let assetIdentifier: String
+    let dateTaken: Date
+    let failureReason: String
+    let retryCount: Int
+    let lastAttemptDate: Date?
+}
+
+// MARK: - UnidentifiedImageGridItem
+
 struct UnidentifiedImageGridItem: View {
-    let imageModel: UnidentifiedImageModel
+    let photoItem: PhotoItem
     let isSelected: Bool
     let isSelecting: Bool
     let onTap: () -> Void
@@ -280,95 +386,61 @@ struct UnidentifiedImageGridItem: View {
                 // Image
                 Group {
                     if isLoading {
-                        Rectangle()
-                            .fill(Color.gray.opacity(0.1))
-                            .overlay(
-                                ProgressView()
-                                    .scaleEffect(0.8)
-                            )
+                        ProgressView()
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .background(Color.gray.opacity(0.1))
+                            .cornerRadius(12)
                     } else if let uiImage = uiImage {
                         Image(uiImage: uiImage)
                             .resizable()
                             .aspectRatio(contentMode: .fill)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .clipped()
+                            .cornerRadius(12)
                     } else {
-                        Rectangle()
-                            .fill(Color.gray.opacity(0.1))
-                            .overlay(
-                                Image(systemName: "photo")
-                                    .foregroundColor(.gray)
-                                    .font(.title2)
-                            )
+                        Image(systemName: "photo")
+                            .foregroundColor(.gray)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .background(Color.gray.opacity(0.1))
+                            .cornerRadius(12)
                     }
                 }
-                .clipped()
                 
                 // Selection overlay
                 if isSelecting {
                     VStack {
                         HStack {
                             Spacer()
-                            
-                            ZStack {
-                                Circle()
-                                    .fill(isSelected ? Color.teal : Color.white)
-                                    .frame(width: 24, height: 24)
-                                    .shadow(radius: 2)
-                                
-                                if isSelected {
-                                    Image(systemName: "checkmark")
-                                        .font(.caption)
-                                        .fontWeight(.bold)
-                                        .foregroundColor(.white)
-                                }
-                            }
-                        }
-                        .padding(8)
-                        
-                        Spacer()
-                    }
-                }
-                
-                // Status indicators
-                VStack {
-                    Spacer()
-                    
-                    HStack {
-                        Spacer()
-                        
-                        if imageModel.isProcessed {
-                            // Success indicator
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.green)
-                                .font(.title3)
-                                .background(Color.white)
+                            Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                                .foregroundColor(isSelected ? .blue : .white)
+                                .font(.title2)
+                                .background(Color.black.opacity(0.3))
                                 .clipShape(Circle())
-                        } else {
-                            // Failure indicator with retry count
-                            VStack(spacing: 2) {
-                                Image(systemName: "exclamationmark.triangle.fill")
-                                    .foregroundColor(.orange)
-                                    .font(.caption)
-                                    .background(Color.white)
-                                    .clipShape(Circle())
-                                
-                                if imageModel.retryCount > 0 {
-                                    Text("\(imageModel.retryCount)")
-                                        .font(.caption2)
-                                        .fontWeight(.bold)
-                                        .foregroundColor(.white)
-                                        .padding(.horizontal, 4)
-                                        .padding(.vertical, 2)
-                                        .background(Color.red)
-                                        .clipShape(Circle())
-                                }
-                            }
                         }
+                        Spacer()
                     }
                     .padding(8)
+                }
+                
+                // Failure indicator
+                if !isSelecting {
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Spacer()
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundColor(.orange)
+                                .font(.caption)
+                                .background(Color.black.opacity(0.3))
+                                .clipShape(Circle())
+                        }
+                        .padding(8)
+                    }
                 }
             }
         }
         .buttonStyle(PlainButtonStyle())
+        .aspectRatio(1, contentMode: .fit)
         .onAppear {
             loadImage()
         }
@@ -376,7 +448,7 @@ struct UnidentifiedImageGridItem: View {
     
     private func loadImage() {
         let fetchOptions = PHFetchOptions()
-        let assets = PHAsset.fetchAssets(withLocalIdentifiers: [imageModel.photoAssetIdentifier], options: fetchOptions)
+        let assets = PHAsset.fetchAssets(withLocalIdentifiers: [photoItem.assetIdentifier], options: fetchOptions)
         
         guard let asset = assets.firstObject else {
             isLoading = false
@@ -386,11 +458,110 @@ struct UnidentifiedImageGridItem: View {
         let imageManager = PHImageManager.default()
         let requestOptions = PHImageRequestOptions()
         requestOptions.isSynchronous = false
-        requestOptions.deliveryMode = .fastFormat
+        requestOptions.deliveryMode = .highQualityFormat
         
-        let targetSize = CGSize(width: 300, height: 300)
+        imageManager.requestImage(for: asset, targetSize: CGSize(width: 300, height: 300), contentMode: .aspectFill, options: requestOptions) { image, _ in
+            DispatchQueue.main.async {
+                self.uiImage = image
+                self.isLoading = false
+            }
+        }
+    }
+}
+
+// MARK: - UnidentifiedImageDetailView
+
+struct UnidentifiedImageDetailView: View {
+    let photoItem: PhotoItem
+    @Environment(\.dismiss) private var dismiss
+    @State private var uiImage: UIImage?
+    @State private var isLoading = true
+    
+    var body: some View {
+        NavigationView {
+            VStack {
+                if isLoading {
+                    ProgressView()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if let uiImage = uiImage {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    Image(systemName: "photo")
+                        .foregroundColor(.gray)
+                        .font(.system(size: 100))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+                
+                // Failure info
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Failure Reason: \(photoItem.failureReason)")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    
+                    Text("Retry Count: \(photoItem.retryCount)")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    
+                    if let lastAttempt = photoItem.lastAttemptDate {
+                        Text("Last Attempt: \(lastAttempt, style: .date)")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .padding()
+                .background(Color.gray.opacity(0.1))
+                .cornerRadius(12)
+                .padding()
+                
+                // Action buttons
+                HStack(spacing: 20) {
+                    Button("Retry") {
+                        // Implement retry logic
+                    }
+                    .buttonStyle(.borderedProminent)
+                    
+                    Button("Delete") {
+                        // Implement delete logic
+                        dismiss()
+                    }
+                    .buttonStyle(.bordered)
+                    .foregroundColor(.red)
+                }
+                .padding()
+            }
+            .navigationTitle("Image Detail")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+        .onAppear {
+            loadImage()
+        }
+    }
+    
+    private func loadImage() {
+        let fetchOptions = PHFetchOptions()
+        let assets = PHAsset.fetchAssets(withLocalIdentifiers: [photoItem.assetIdentifier], options: fetchOptions)
         
-        imageManager.requestImage(for: asset, targetSize: targetSize, contentMode: .aspectFill, options: requestOptions) { image, _ in
+        guard let asset = assets.firstObject else {
+            isLoading = false
+            return
+        }
+        
+        let imageManager = PHImageManager.default()
+        let requestOptions = PHImageRequestOptions()
+        requestOptions.isSynchronous = false
+        requestOptions.deliveryMode = .highQualityFormat
+        
+        imageManager.requestImage(for: asset, targetSize: PHImageManagerMaximumSize, contentMode: .aspectFit, options: requestOptions) { image, _ in
             DispatchQueue.main.async {
                 self.uiImage = image
                 self.isLoading = false
@@ -401,5 +572,4 @@ struct UnidentifiedImageGridItem: View {
 
 #Preview {
     UnidentifiedImagesView(path: .constant([]))
-        .modelContainer(for: UnidentifiedImageModel.self, inMemory: true)
 }

@@ -6,12 +6,9 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct CardToBeIdentified: View {
-    @Environment(\.modelContext) private var modelContext
     @Binding var path: [NavigationPath]
-    @State private var unidentifiedCount = 0
     
     var body: some View {
         Button(action: {
@@ -30,19 +27,11 @@ struct CardToBeIdentified: View {
                         .foregroundStyle(Color.primary)
                         .colorInvert()
                     
-                    if unidentifiedCount > 0 {
-                        Text("\(unidentifiedCount) images")
-                            .font(.caption)
-                            .foregroundStyle(Color.primary)
-                            .colorInvert()
-                            .opacity(0.8)
-                    } else {
-                        Text("No images to identify")
-                            .font(.caption)
-                            .foregroundStyle(Color.primary)
-                            .colorInvert()
-                            .opacity(0.8)
-                    }
+                    Text("View unidentified images")
+                        .font(.caption)
+                        .foregroundStyle(Color.primary)
+                        .colorInvert()
+                        .opacity(0.8)
                 }
                 Spacer()
                 
@@ -56,18 +45,6 @@ struct CardToBeIdentified: View {
             .cornerRadius(10)
         }
         .buttonStyle(PlainButtonStyle())
-        .onAppear {
-            loadUnidentifiedCount()
-        }
-    }
-    
-    private func loadUnidentifiedCount() {
-        let descriptor = FetchDescriptor<UnidentifiedImageModel>()
-        do {
-            unidentifiedCount = try modelContext.fetch(descriptor).count
-        } catch {
-            print("Error fetching unidentified count: \(error)")
-        }
     }
 }
 
