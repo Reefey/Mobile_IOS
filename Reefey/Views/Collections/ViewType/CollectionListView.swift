@@ -104,7 +104,7 @@ struct CollectionListItem: View {
                         .multilineTextAlignment(.leading)
                     
                     // Scientific Name
-                    Text(collection.scientificName)
+                    Text(collection.scientificName ?? "Unknown")
                         .font(.body)
                         .foregroundColor(.secondary)
                         .italic()
@@ -116,7 +116,7 @@ struct CollectionListItem: View {
                             Image(systemName: "questionmark.circle.fill")
                                 .resizable()
                                 .scaledToFit()
-                                .foregroundStyle(rarity <= collection.rarity ? getRarityColor(rarity) : Color.gray.opacity(0.3))
+                                .foregroundStyle(rarity <= (collection.rarity ?? 0) ? getRarityColor(rarity) : Color.gray.opacity(0.3))
                                 .frame(width: 30, height: 30)
                         }
                     }

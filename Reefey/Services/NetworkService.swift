@@ -65,7 +65,26 @@ class NetworkService: @unchecked Sendable {
 
             print("Response JSON: \(String(data: data, encoding: .utf8) ?? "No data")")
             
-            return try decoder.decode(T.self, from: data)
+            do {
+                return try decoder.decode(T.self, from: data)
+            } catch let decodingError as DecodingError {
+                print("Detailed decoding error: \(decodingError)")
+                switch decodingError {
+                case .typeMismatch(let type, let context):
+                    print("Type mismatch for type \(type) at \(context.codingPath)")
+                case .valueNotFound(let type, let context):
+                    print("Value not found for type \(type) at \(context.codingPath)")
+                case .keyNotFound(let key, let context):
+                    print("Key not found: \(key) at \(context.codingPath)")
+                case .dataCorrupted(let context):
+                    print("Data corrupted at \(context.codingPath)")
+                @unknown default:
+                    print("Unknown decoding error: \(decodingError)")
+                }
+                throw NetworkError.decodingError(decodingError)
+            } catch {
+                throw NetworkError.decodingError(error)
+            }
         } catch let error as NetworkError {
             throw error
         } catch {

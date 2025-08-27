@@ -105,7 +105,7 @@ struct CollectionGridItem: View {
                         .multilineTextAlignment(.leading)
                     
                     // Scientific Name
-                    Text(collection.scientificName)
+                    Text(collection.scientificName ?? "Unknown")
                         .font(.system(size: 12))
                         .foregroundColor(.secondary)
                         .italic()
@@ -117,13 +117,13 @@ struct CollectionGridItem: View {
                             Image(systemName: "circle.fill")
                                 .resizable()
                                 .scaledToFit()
-                                .foregroundStyle(rarity <= collection.rarity ? Color.blue : Color.gray.opacity(0.3))
+                                .foregroundStyle(rarity <= (collection.rarity ?? 0) ? Color.blue : Color.gray.opacity(0.3))
                                 .frame(width: 12, height: 12)
                         }
                         
                         Spacer()
                         
-                        Text("\(collection.totalPhotos) photos")
+                        Text("\(collection.totalPhotos ?? 0) photos")
                             .font(.system(size: 10))
                             .foregroundColor(.secondary)
                     }

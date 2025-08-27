@@ -158,7 +158,7 @@ struct CollectionDetailView: View {
                         GridItem(.fixed(itemSize), spacing: 2),
                         GridItem(.fixed(itemSize), spacing: 2)
                     ], spacing: 2) {
-                        ForEach(Array(collection.photos.enumerated()), id: \.element.id) { index, photo in
+                        ForEach(Array(collection.photos.enumerated()), id: \.offset) { index, photo in
                             CollectionPhotoView(photo: photo)
                                 .frame(width: itemSize, height: itemSize)
                                 .onTapGesture {
@@ -214,7 +214,7 @@ struct CollectionDetailView: View {
         
         do {
             let networkService = NetworkService.shared
-            let response = try await networkService.fetchMarineSpeciesDetail(id: collection.marineId)
+            let response = try await networkService.fetchMarineSpeciesDetail(id: collection.id)
             if response.success {
                 await MainActor.run {
                     marineSpecies = response.data
@@ -356,9 +356,9 @@ struct CollectionDetailView: View {
         VStack(alignment: .leading, spacing: 16) {
             InfoSectionView(title: "Basic Information", content: [
                 ("Species", collection.species),
-                ("Scientific Name", collection.scientificName),
-                ("Rarity", "\(collection.rarity)/5"),
-                ("Status", collection.status)
+                ("Scientific Name", collection.scientificName ?? "Unknown"),
+                ("Rarity", "\(collection.rarity ?? 0)/5"),
+                ("Status", collection.status ?? "Unknown")
             ])
             
             if let minSize = collection.sizeMinCm, let maxSize = collection.sizeMaxCm {
@@ -367,23 +367,23 @@ struct CollectionDetailView: View {
                 ])
             }
             
-            if !collection.habitatType.isEmpty {
+            if let habitatType = collection.habitatType, !habitatType.isEmpty {
                 InfoSectionView(title: "Habitat", content: [
-                    ("Habitat Type", collection.habitatType.joined(separator: ", "))
+                    ("Habitat Type", habitatType.joined(separator: ", "))
                 ])
             }
             
             InfoSectionView(title: "Description", content: [
-                ("Details", collection.description)
+                ("Details", collection.description ?? "No description available")
             ])
         }
     }
     
     private var collectionInfoSection: some View {
         InfoSectionView(title: "Your Collection", content: [
-            ("Total Photos", "\(collection.totalPhotos)"),
-            ("First Seen", collection.firstSeenDate?.formatted(date: .abbreviated, time: .omitted) ?? collection.firstSeen),
-            ("Last Seen", collection.lastSeenDate?.formatted(date: .abbreviated, time: .omitted) ?? collection.lastSeen)
+            ("Total Photos", "\(collection.totalPhotos ?? 0)"),
+            ("First Seen", collection.firstSeenDate?.formatted(date: .abbreviated, time: .omitted) ?? (collection.firstSeen ?? "Unknown")),
+            ("Last Seen", collection.lastSeenDate?.formatted(date: .abbreviated, time: .omitted) ?? (collection.lastSeen ?? "Unknown"))
         ])
     }
     
@@ -408,7 +408,7 @@ struct CollectionPhotoView: View {
     
     var body: some View {
         Group {
-            AsyncImage(url: URL(string: photo.url)) { image in
+            AsyncImage(url: URL(string: photo.url ?? "")) { image in
                 image
                     .resizable()
                     .aspectRatio(contentMode: .fill)
@@ -478,9 +478,9 @@ struct ImageDetailView: View {
     var body: some View {
         ZStack {
             TabView(selection: $selectedIndex) {
-                ForEach(Array(photos.enumerated()), id: \.element.id) { index, photo in
+                ForEach(Array(photos.enumerated()), id: \.offset) { index, photo in
                     ZStack {
-                        AsyncImage(url: URL(string: photo.url)) { image in
+                        AsyncImage(url: URL(string: photo.url ?? "")) { image in
                             image
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
@@ -520,23 +520,34 @@ struct ImageDetailView: View {
 #Preview {
     let sampleCollection = Collection(
         id: 1,
-        deviceId: "sample-device",
-        marineId: 123,
-        species: "Bluefin Tuna",
+        name: "Bluefin Tuna",
         scientificName: "Thunnus thynnus",
+        category: "Fishes",
         rarity: 5,
         sizeMinCm: 200,
         sizeMaxCm: 400,
         habitatType: ["Deep Ocean", "Open Water"],
         diet: "Fish and squid",
         behavior: "Fast swimming predator",
+        danger: "High",
+        venomous: false,
         description: "A large, fast-swimming fish found in the Atlantic Ocean and Mediterranean Sea.",
-        marineImageUrl: nil,
-        photos: [],
-        totalPhotos: 15,
-        firstSeen: "2025-01-15T10:00:00Z",
+        lifeSpan: "15-20 years",
+        reproduction: "Spawning in warm waters",
+        migration: "Long-distance migration",
+        endangered: "Critically Endangered",
+        funFact: "Can swim up to 70 km/h",
+        imageUrl: nil,
+        createdAt: "2025-01-01T00:00:00Z",
+        updatedAt: "2025-08-20T15:30:00Z",
+        inUserCollection: true,
+        hasAnalyzedPhotos: true,
         lastSeen: "2025-08-20T15:30:00Z",
-        status: "Endangered"
+        firstSeen: "2025-01-15T10:00:00Z",
+        totalPhotos: 15,
+        userPhotos: [],
+        collectionId: 157,
+        status: "identified"
     )
     
     CollectionDetailView(collection: sampleCollection)

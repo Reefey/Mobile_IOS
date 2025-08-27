@@ -220,6 +220,6 @@ class CollectionsViewModel {
     }
     
     func habitatText(for collection: Collection) -> String {
-        return collection.habitatType.joined(separator: ", ")
+        return collection.habitatType?.joined(separator: ", ") ?? "Habitat information not available"
     }
 }

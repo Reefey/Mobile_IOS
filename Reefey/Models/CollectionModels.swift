@@ -3,53 +3,82 @@ import Foundation
 // MARK: - Collection Models
 struct Collection: Identifiable, Codable, Hashable {
     let id: Int
-    let deviceId: String
-    let marineId: Int
-    let species: String
-    let scientificName: String
-    let rarity: Int
+    let name: String?
+    let scientificName: String?
+    let category: String?
+    let rarity: Int?
     let sizeMinCm: Double?
     let sizeMaxCm: Double?
-    let habitatType: [String]
+    let habitatType: [String]?
     let diet: String?
     let behavior: String?
-    let description: String
-    let marineImageUrl: String?
-    let photos: [CollectionPhoto]
-    let totalPhotos: Int
-    let firstSeen: String // Changed from Date to String
-    let lastSeen: String // Changed from Date to String
-    let status: String
+    let danger: String?
+    let venomous: Bool?
+    let description: String?
+    let lifeSpan: String?
+    let reproduction: String?
+    let migration: String?
+    let endangered: String?
+    let funFact: String?
+    let imageUrl: String?
+    let createdAt: String?
+    let updatedAt: String?
+    let inUserCollection: Bool?
+    let hasAnalyzedPhotos: Bool?
+    let lastSeen: String?
+    let firstSeen: String?
+    let totalPhotos: Int?
+    let userPhotos: [CollectionPhoto]?
+    let collectionId: Int?
+    let status: String?
     
     enum CodingKeys: String, CodingKey {
         case id
-        case deviceId
-        case marineId
-        case species
+        case name
         case scientificName
+        case category
         case rarity
         case sizeMinCm
         case sizeMaxCm
         case habitatType
         case diet
         case behavior
+        case danger
+        case venomous
         case description
-        case marineImageUrl
-        case photos
-        case totalPhotos
-        case firstSeen
+        case lifeSpan
+        case reproduction
+        case migration
+        case endangered
+        case funFact
+        case imageUrl
+        case createdAt
+        case updatedAt
+        case inUserCollection
+        case hasAnalyzedPhotos
         case lastSeen
+        case firstSeen
+        case totalPhotos
+        case userPhotos
+        case collectionId
         case status
     }
     
+    // Computed properties for backwards compatibility
+    var species: String { name ?? "Unknown" }
+    var marineImageUrl: String? { imageUrl }
+    var photos: [CollectionPhoto] { userPhotos ?? [] }
+    
     // Computed properties for date conversion
     var firstSeenDate: Date? {
+        guard let firstSeen = firstSeen else { return nil }
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return formatter.date(from: firstSeen)
     }
     
     var lastSeenDate: Date? {
+        guard let lastSeen = lastSeen else { return nil }
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return formatter.date(from: lastSeen)
@@ -57,14 +86,14 @@ struct Collection: Identifiable, Codable, Hashable {
 }
 
 struct CollectionPhoto: Codable, Hashable {
-    let id: Int
-    let url: String
+    let id: Int?
+    let url: String?
     let annotatedUrl: String?
-    let dateFound: String // Changed from Date to String
+    let dateFound: String?
     let spotId: Int?
     let confidence: Double?
     let boundingBox: BoundingBox?
-    let spots: CollectionSpot?
+    let notes: String?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -74,11 +103,12 @@ struct CollectionPhoto: Codable, Hashable {
         case spotId
         case confidence
         case boundingBox
-        case spots
+        case notes
     }
     
     // Computed property for date conversion
     var dateFoundDate: Date? {
+        guard let dateFound = dateFound else { return nil }
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return formatter.date(from: dateFound)
@@ -86,10 +116,10 @@ struct CollectionPhoto: Codable, Hashable {
 }
 
 struct BoundingBox: Codable, Hashable {
-    let x: Double
-    let y: Double
-    let width: Double
-    let height: Double
+    let x: Double?
+    let y: Double?
+    let width: Double?
+    let height: Double?
 }
 
 struct CollectionSpot: Codable, Hashable {
