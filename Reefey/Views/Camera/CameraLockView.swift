@@ -6,14 +6,17 @@
 //
 import SwiftUI
 import UIKit
+import SwiftData
 
 struct CameraLockView: View {
-    @State internal var VM = CameraViewModel()
+    @State internal var VM = CameraLockViewModel()
+    @Environment(\.modelContext) private var modelContext
     @Binding var path: [NavigationPath]
     @Binding var cameraShow: Bool
     @State private var isPressed = false
     @State private var pressTimer: Timer?
     @State private var hapticTimer: Timer?
+    @State private var picturesTaken = 0
     
     // Container for volume handler
     @State private var containerView = UIView()
@@ -71,6 +74,7 @@ struct CameraLockView: View {
         )
         .onAppear {
             setupVolumeCallbacks()
+            setupSwiftDataCallback()
             VM.setupVolumeHandler(containerView: containerView)
         }
         .onDisappear {
@@ -84,7 +88,7 @@ struct CameraLockView: View {
         }
     }
     private var cameraPreview: some View {
-        CameraPreview(cameraVM: $VM)
+        CameraPreview<CameraLockViewModel>(cameraVM: $VM)
             .ignoresSafeArea()
             .onAppear {
                 VM.requestAccessAndSetup()
@@ -121,7 +125,12 @@ struct CameraLockView: View {
         let notificationFeedback = UINotificationFeedbackGenerator()
         notificationFeedback.notificationOccurred(.success)
         
-        // Unlock action
+        // Unlock action - only show if pictures were taken
+        if picturesTaken > 0 {
+            // Pass info to show UNLOCK dialog
+            UserDefaults.standard.set(true, forKey: "shouldShowUnlockDialog")
+        }
+        
         cameraShow = true
         path = []
     }
@@ -135,6 +144,12 @@ struct CameraLockView: View {
         }
     }
     
+    private func setupSwiftDataCallback() {
+        VM.onPhotoCapture = { [self] assetIdentifier in
+            VM.saveToSwiftData(photoAssetIdentifier: assetIdentifier, context: modelContext)
+        }
+    }
+    
     private func handleVolumeUpPress() {
         print("Volume Up pressed")
         let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
@@ -144,6 +159,7 @@ struct CameraLockView: View {
     private func handleVolumeDownPress() {
         print("Volume Down pressed")
         VM.takePhoto()
+        picturesTaken += 1
         let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
         impactFeedback.impactOccurred()
     }

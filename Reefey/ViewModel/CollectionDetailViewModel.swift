@@ -10,8 +10,8 @@ class CollectionDetailViewModel {
     var isLoading = false
     var errorMessage: String?
     
-    // MARK: - Device ID (should be generated or stored securely)
-    private let deviceId = UIDevice.current.identifierForVendor?.uuidString ?? "default-device-id"
+    // MARK: - Device Manager
+    private let deviceManager = DeviceManager.shared
     
     // MARK: - Public Methods
     @MainActor
@@ -62,7 +62,7 @@ class CollectionDetailViewModel {
         guard let collection = collection else { return }
         
         do {
-            let updatedCollection = try await networkService.toggleFavorite(deviceId: deviceId, id: collection.id)
+            let updatedCollection = try await networkService.toggleFavorite(deviceId: deviceManager.deviceId, id: collection.id)
             self.collection = updatedCollection
         } catch {
             errorMessage = "Failed to update favorite: \(error.localizedDescription)"
@@ -74,7 +74,7 @@ class CollectionDetailViewModel {
         guard let collection = collection else { return false }
         
         do {
-            try await networkService.deleteCollection(deviceId: deviceId, id: collection.id)
+            try await networkService.deleteCollection(deviceId: deviceManager.deviceId, id: collection.id)
             return true
         } catch {
             errorMessage = "Failed to delete collection: \(error.localizedDescription)"

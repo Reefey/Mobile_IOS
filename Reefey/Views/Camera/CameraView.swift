@@ -6,13 +6,18 @@
 //
 import SwiftUI
 import PhotosUI
+import SwiftData
 
 struct CameraView: View {
     @State internal var VM = CameraViewModel()
+    @Environment(\.modelContext) var modelContext
     @Binding var path: [NavigationPath]
     @Binding var cameraShow: Bool
     @State private var selectedItem: PhotosPickerItem?
     @State private var selectedImage: UIImage?
+    
+    @State var isShowIdentifyDialog = false
+    @State var identifyDialogState: IdentifyDialogEnum = .LOADING
     var body: some View {
         ZStack {
             cameraPreview
@@ -43,6 +48,8 @@ struct CameraView: View {
                         
                         Spacer()
                         Button {
+                            isShowIdentifyDialog = true
+                            identifyDialogState = .LOADING
                             VM.takePhoto()
                         } label : {
                             ZStack {
@@ -81,6 +88,25 @@ struct CameraView: View {
                 .frame(maxWidth: .infinity)
                 .background(.ultraThinMaterial)
             }
+            if isShowIdentifyDialog {
+                IdentifyDialogView(identifyDialogState: $identifyDialogState, isShowIdentifyDialog: $isShowIdentifyDialog)
+            }
+        }
+        .onAppear {
+            // Check if we should show UNLOCK dialog from CameraLockView
+            if UserDefaults.standard.bool(forKey: "shouldShowUnlockDialog") {
+                isShowIdentifyDialog = true
+                identifyDialogState = .UNLOCK(
+                    viewUnidentifiedAction: {
+                        isShowIdentifyDialog = false
+                        // Handle view unidentified images action
+                    },
+                    dismissAction: {
+                        isShowIdentifyDialog = false
+                    }
+                )
+                UserDefaults.standard.removeObject(forKey: "shouldShowUnlockDialog")
+            }
         }
         .onChange(of: selectedItem) { _, newItem in
             Task {
@@ -88,7 +114,11 @@ struct CameraView: View {
                    let uiImage = UIImage(data: data) {
                     selectedImage = uiImage
                     // Save to Photos if needed
-                    VM.saveToPhotos(image: uiImage)
+                    VM.saveToPhotos(image: uiImage) { assetIdentifier in
+                        if let identifier = assetIdentifier {
+                            print("Photo from picker saved with identifier: \(identifier)")
+                        }
+                    }
                     
                     // Provide feedback
                     let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
@@ -98,10 +128,11 @@ struct CameraView: View {
         }
     }
     private var cameraPreview: some View {
-        CameraPreview(cameraVM: $VM)
+        CameraPreview<CameraViewModel>(cameraVM: $VM)
             .ignoresSafeArea()
             .onAppear {
                 VM.requestAccessAndSetup()
+                setupAIFailureCallback()
             }
     }
 
