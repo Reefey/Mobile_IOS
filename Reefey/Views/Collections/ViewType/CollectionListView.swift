@@ -137,25 +137,25 @@ struct CollectionListItem: View {
                     
                     // Rarity indicators
                     HStack {
-                        if let _ = collection.edibility {
+                        if collection.edibility ?? false {
                             Image("Edible")
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 30, height: 30)
                         }
-                        if let _ = collection.venomous {
+                        if collection.venomous ?? false{
                             Image("Venomous")
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 30, height: 30)
                         }
-                        if let _ = collection.poisonous {
+                        if collection.poisonous ?? false {
                             Image("Poisonous")
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 30, height: 30)
                         }
-                        if let _ = collection.endangeredd {
+                        if collection.endangeredd ?? false{
                             Image("Endanged")
                                 .resizable()
                                 .scaledToFit()

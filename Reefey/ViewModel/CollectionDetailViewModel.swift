@@ -20,7 +20,7 @@ class CollectionDetailViewModel {
         errorMessage = nil
         
         do {
-            let response = try await networkService.fetchCollectionDetail(deviceId: deviceId, id: id)
+            let response = try await networkService.fetchMarineDetail(deviceId: deviceId, id: id)
             if response.success {
                 collection = response.data
             } else {

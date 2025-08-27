@@ -28,15 +28,15 @@ struct MarineData: Codable {
     let diet: String?
     let behavior: String?
     let danger: String
-    let venomous: Bool
+    let venomous: Bool?
     let description: String
     let lifeSpan: String?
     let reproduction: String?
     let migration: String?
     let endangered: String?
-    let endangeredd: Bool
-    let edibility: Bool
-    let poisonous: Bool
+    let endangeredd: Bool?
+    let edibility: Bool?
+    let poisonous: Bool?
     let funFact: String?
     let imageUrl: String?
     let createdAt: String

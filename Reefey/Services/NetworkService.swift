@@ -185,6 +185,10 @@ class NetworkService: @unchecked Sendable {
         return try await request(endpoint: "/collections/\(deviceId)/\(id)")
     }
     
+    func fetchMarineDetail(deviceId: String, id: Int) async throws -> CollectionDetail {
+        return try await request(endpoint: "/marine/detail/\(deviceId)/\(id)")
+    }
+    
     func createCollection(deviceId: String, _ createRequest: CreateCollectionRequest) async throws -> Collection {
         let encoder = JSONEncoder()
         let body = try encoder.encode(createRequest)

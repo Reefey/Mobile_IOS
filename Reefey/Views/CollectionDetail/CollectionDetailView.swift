@@ -481,11 +481,12 @@ struct CollectionPhotoView: View {
             AsyncImage(url: URL(string: photo.url ?? "")) { image in
                 image
                     .resizable()
-                    .aspectRatio(contentMode: .fill)
+                    .scaledToFill()
             } placeholder: {
                 photoPlaceholder
             }
         }
+        .frame(width: 140, height: 140)
         .clipped()
         .background(Color.gray.opacity(0.1))
     }
@@ -573,7 +574,7 @@ struct ImageDetailView: View {
                     Button("Done") {
                         isPresented = false
                     }
-                    .foregroundColor(.white)
+                    .foregroundColor(.primary)
                     .font(.system(size: 17, weight: .medium))
                     .padding()
                     

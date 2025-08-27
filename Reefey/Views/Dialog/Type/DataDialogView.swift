@@ -46,7 +46,7 @@ struct DataDialogView: View {
                     // Icon row
                     HStack(spacing: 16) {
                         // Edible icon (fork and knife)
-                        if marineData.edibility {
+                        if marineData.edibility ?? false {
                             ZStack {
                                 Circle()
                                     .fill(Color.white)
@@ -58,7 +58,7 @@ struct DataDialogView: View {
                         
                         
                         // Warning icon (hand with lines)
-                        if marineData.venomous {
+                        if marineData.venomous ?? false {
                             ZStack {
                                 Circle()
                                     .fill(Color.orange)
@@ -70,7 +70,7 @@ struct DataDialogView: View {
                         }
                         
                         
-                        if marineData.poisonous {
+                        if marineData.poisonous ?? false {
                             ZStack {
                                 Circle()
                                     .fill(Color.purple)
@@ -82,7 +82,7 @@ struct DataDialogView: View {
                         }
 //                        
 //
-                        if marineData.endangeredd {
+                        if marineData.endangeredd ?? false {
                             ZStack {
                                 Circle()
                                     .fill(Color.red)
