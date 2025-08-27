@@ -134,7 +134,7 @@ struct CollectionFilters {
     var filterMarine: String?
     var filterSpot: Int?
     var filterRarity: Int?
-    var filterCategory: String?
+    var category: String?
     var filterDanger: String?
     var filterDateFrom: String?
     var filterDateTo: String?
@@ -155,8 +155,8 @@ struct CollectionFilters {
         if let filterRarity = filterRarity {
             queryItems.append(URLQueryItem(name: "filterRarity", value: "\(filterRarity)"))
         }
-        if let filterCategory = filterCategory {
-            queryItems.append(URLQueryItem(name: "filterCategory", value: filterCategory))
+        if let category = category {
+            queryItems.append(URLQueryItem(name: "category", value: category))
         }
         if let filterDanger = filterDanger {
             queryItems.append(URLQueryItem(name: "filterDanger", value: filterDanger))

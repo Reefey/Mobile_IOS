@@ -161,8 +161,8 @@ class NetworkService: @unchecked Sendable {
             if let filterRarity = filters.filterRarity {
                 queryItems.append(URLQueryItem(name: "filterRarity", value: "\(filterRarity)"))
             }
-            if let filterCategory = filters.filterCategory {
-                queryItems.append(URLQueryItem(name: "filterCategory", value: filterCategory))
+            if let category = filters.category {
+                queryItems.append(URLQueryItem(name: "category", value: category))
             }
             if let filterDanger = filters.filterDanger {
                 queryItems.append(URLQueryItem(name: "filterDanger", value: filterDanger))

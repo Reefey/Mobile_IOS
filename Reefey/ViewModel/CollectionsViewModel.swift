@@ -167,7 +167,7 @@ class CollectionsViewModel {
     
     // MARK: - Helper Methods
     private func updateFilters() {
-        filters.filterCategory = selectedCategory == "ALL" ? nil : selectedCategory
+        filters.category = selectedCategory == "ALL" ? nil : selectedCategory
         filters.filterRarity = selectedRarity
         filters.filterDanger = selectedDanger == "ALL" ? nil : selectedDanger
         filters.filterMarine = searchText.isEmpty ? nil : searchText
