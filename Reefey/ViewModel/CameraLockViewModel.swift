@@ -11,9 +11,10 @@ import UIKit
 import SwiftUI
 import Photos
 import SwiftData
+import os.log
 
 @Observable
-final class CameraLockViewModel: BaseCameraViewModel {
+final class CameraLockViewModel: BaseCameraViewModel, @unchecked Sendable {
     
     // Callback for saving to SwiftData
     var onPhotoCapture: ((String) -> Void)?
@@ -27,10 +28,10 @@ final class CameraLockViewModel: BaseCameraViewModel {
         }) { success, error in
             DispatchQueue.main.async {
                 if success, let identifier = assetIdentifier {
-                    print("Photo saved successfully with identifier: \(identifier)")
+                    logEvent("Photo saved successfully with identifier: \(identifier)", OSLog.storage)
                     completion(identifier)
                 } else {
-                    print("Error saving photo: \(error?.localizedDescription ?? "Unknown error")")
+                    logEvent("Error saving photo: \(error?.localizedDescription ?? "Unknown error")", OSLog.storage)
                     completion(nil)
                 }
             }
@@ -48,19 +49,26 @@ final class CameraLockViewModel: BaseCameraViewModel {
         
         do {
             try context.save()
-            print("Photo reference saved to SwiftData successfully")
+            logEvent("Photo reference saved to SwiftData successfully", OSLog.storage)
         } catch {
-            print("Error saving to SwiftData: \(error)")
+            logEvent("Error saving to SwiftData: \(error)", OSLog.storage)
         }
     }
     
     // Override template method to handle photo capture for SwiftData storage
-    override func handlePhotoCapture(image: UIImage, imageData: Data, resizedImage: Data) {
-        // Auto-save to Photos and get identifier for SwiftData
-        saveToPhotos(image: image) { [weak self] assetIdentifier in
-            if let identifier = assetIdentifier {
-                self?.onPhotoCapture?(identifier)
+    override func handlePhotoCapture(image: UIImage, imageData: Data, resizedImage: Data, existingAssetIdentifier: String? = nil) {
+        // Use existing identifier or save to Photos and get identifier for SwiftData
+        if let existingIdentifier = existingAssetIdentifier {
+            // Gallery image - use existing asset identifier
+            onPhotoCapture?(existingIdentifier)
+        } else {
+            // Camera image - save to Photos first then get identifier
+            saveToPhotos(image: image) { [weak self] assetIdentifier in
+                if let identifier = assetIdentifier {
+                    self?.onPhotoCapture?(identifier)
+                }
             }
         }
     }
 }
+

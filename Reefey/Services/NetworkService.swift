@@ -1,7 +1,7 @@
 import Foundation
 
 // MARK: - Network Service
-class NetworkService {
+class NetworkService: @unchecked Sendable {
     static let shared = NetworkService()
     
     private let baseURL = "https://586b5915665f.ngrok-free.app/api" // Real API base URL

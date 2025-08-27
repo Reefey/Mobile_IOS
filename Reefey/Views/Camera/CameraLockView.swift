@@ -65,6 +65,7 @@ struct CameraLockView: View {
                 }
                 .frame(maxWidth: .infinity)
             }
+            CameraLockOnBoardingView()
         }
         .navigationBarBackButtonHidden(true)
         .statusBarHidden()

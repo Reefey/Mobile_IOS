@@ -8,7 +8,7 @@
 import Foundation
 import UIKit
 
-class DeviceManager {
+class DeviceManager: @unchecked Sendable {
     static let shared = DeviceManager()
     
     private init() {}
