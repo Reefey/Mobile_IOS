@@ -30,6 +30,15 @@ struct CameraView: View {
                     .fontWeight(.thin)
                     .frame(width: 300, height: 300)
                 Spacer()
+                Button {
+                    
+                } label: {
+                    Image("UW")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 50, height: 50)
+                }
+                
                 VStack {
                     HStack {
                         PhotosPicker(selection: $selectedItem, matching: .images, photoLibrary: .shared()) {

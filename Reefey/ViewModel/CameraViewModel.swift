@@ -56,19 +56,29 @@ final class CameraViewModel: BaseCameraViewModel {
     }
     
     func saveToSwiftData(photoAssetIdentifier: String, context: ModelContext) {
-        // Create a new UnidentifiedImageModel object and save to SwiftData
-        let unidentifiedImage = UnidentifiedImageModel(
-            photoAssetIdentifier: photoAssetIdentifier,
-            dateTaken: Date()
+        // Check if an UnidentifiedImageModel with this photoAssetIdentifier already exists
+        let descriptor = FetchDescriptor<UnidentifiedImageModel>(
+            predicate: #Predicate { $0.photoAssetIdentifier == photoAssetIdentifier }
         )
         
-        context.insert(unidentifiedImage)
-        
         do {
-            try context.save()
-            logEvent("Photo reference saved to SwiftData due to AI failure", OSLog.storage)
+            let existingImages = try context.fetch(descriptor)
+            
+            if existingImages.isEmpty {
+                // Create a new UnidentifiedImageModel object and save to SwiftData
+                let unidentifiedImage = UnidentifiedImageModel(
+                    photoAssetIdentifier: photoAssetIdentifier,
+                    dateTaken: Date()
+                )
+                
+                context.insert(unidentifiedImage)
+                try context.save()
+                logEvent("Photo reference saved to SwiftData due to AI failure", OSLog.storage)
+            } else {
+                logEvent("Photo with identifier \(photoAssetIdentifier) already exists in SwiftData, skipping duplicate", OSLog.storage)
+            }
         } catch {
-            logEvent("Error saving to SwiftData: \(error)", OSLog.storage)
+            logEvent("Error checking/saving to SwiftData: \(error)", OSLog.storage)
         }
     }
     
