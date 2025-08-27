@@ -203,8 +203,10 @@ class CollectionsViewModel {
     }
     
     func sizeText(for collection: MarineSpecies) -> String {
-        let minSize = collection.sizeMinCm
-        let maxSize = collection.sizeMaxCm
+        guard let minSize = collection.sizeMinCm,
+              let maxSize = collection.sizeMaxCm else {
+            return "Size unknown"
+        }
         
         if minSize == maxSize {
             return "\(minSize) cm"

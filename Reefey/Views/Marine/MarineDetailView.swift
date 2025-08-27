@@ -98,8 +98,8 @@ struct MarineDetailView: View {
             
             VStack(spacing: 8) {
                 InfoRow(title: "Size", value: viewModel.sizeText(for: species))
-                InfoRow(title: "Lifespan", value: species.lifeSpan)
-                InfoRow(title: "Diet", value: species.diet)
+                InfoRow(title: "Lifespan", value: species.lifeSpan ?? "Unknown")
+                InfoRow(title: "Diet", value: species.diet ?? "Unknown")
             }
         }
     }
@@ -112,10 +112,10 @@ struct MarineDetailView: View {
                 .fontWeight(.bold)
             
             VStack(spacing: 8) {
-                InfoRow(title: "Behavior", value: species.behavior)
-                InfoRow(title: "Habitat", value: species.habitatType.joined(separator: ", "))
-                InfoRow(title: "Migration", value: species.migration)
-                InfoRow(title: "Reproduction", value: species.reproduction)
+                InfoRow(title: "Behavior", value: species.behavior ?? "Unknown")
+                InfoRow(title: "Habitat", value: species.habitatType.isEmpty ? "Unknown" : species.habitatType.joined(separator: ", "))
+                InfoRow(title: "Migration", value: species.migration ?? "Unknown")
+                InfoRow(title: "Reproduction", value: species.reproduction ?? "Unknown")
             }
         }
     }
@@ -128,7 +128,7 @@ struct MarineDetailView: View {
                 .fontWeight(.bold)
             
             VStack(spacing: 8) {
-                InfoRow(title: "Status", value: species.endangered)
+                InfoRow(title: "Status", value: species.endangered ?? "Unknown")
             }
         }
     }
@@ -140,7 +140,7 @@ struct MarineDetailView: View {
                 .font(.title2)
                 .fontWeight(.bold)
             
-            Text(species.funFact)
+            Text(species.funFact ?? "No fun fact available")
                 .font(.body)
                 .foregroundColor(.secondary)
                 .padding()

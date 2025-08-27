@@ -7,19 +7,19 @@ struct MarineSpecies: Identifiable, Codable, Hashable {
     let scientificName: String
     let category: String
     let rarity: Int
-    let sizeMinCm: Int
-    let sizeMaxCm: Int
+    let sizeMinCm: Int?
+    let sizeMaxCm: Int?
     let habitatType: [String]
-    let diet: String
-    let behavior: String
+    let diet: String?
+    let behavior: String?
     let danger: String
     let venomous: Bool
     let description: String
-    let lifeSpan: String
-    let reproduction: String
-    let migration: String
-    let endangered: String
-    let funFact: String
+    let lifeSpan: String?
+    let reproduction: String?
+    let migration: String?
+    let endangered: String?
+    let funFact: String?
     let imageUrl: String?
     let createdAt: String
     let updatedAt: String

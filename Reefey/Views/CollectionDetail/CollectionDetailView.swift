@@ -9,6 +9,19 @@ struct CollectionDetailView: View {
     @State private var showingImageDetail = false
     @State private var selectedImageIndex = 0
     
+    private var sizeText: String {
+        guard let sizeMin = collection.sizeMinCm,
+              let sizeMax = collection.sizeMaxCm else {
+            return "Size unknown"
+        }
+        
+        if sizeMin == sizeMax {
+            return "\(sizeMin) cm"
+        } else {
+            return "\(sizeMin)-\(sizeMax) cm"
+        }
+    }
+    
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
@@ -160,9 +173,9 @@ struct CollectionDetailView: View {
                     .fontWeight(.bold)
                 
                 VStack(spacing: 8) {
-                    InfoRow(title: "Size", value: "\(collection.sizeMinCm)-\(collection.sizeMaxCm) cm")
-                    InfoRow(title: "Lifespan", value: collection.lifeSpan)
-                    InfoRow(title: "Diet", value: collection.diet)
+                    InfoRow(title: "Size", value: sizeText)
+                    InfoRow(title: "Lifespan", value: collection.lifeSpan ?? "Unknown")
+                    InfoRow(title: "Diet", value: collection.diet ?? "Unknown")
                 }
             }
             .padding(.horizontal, 20)
@@ -174,10 +187,10 @@ struct CollectionDetailView: View {
                     .fontWeight(.bold)
                 
                 VStack(spacing: 8) {
-                    InfoRow(title: "Behavior", value: collection.behavior)
-                    InfoRow(title: "Habitat", value: collection.habitatType.joined(separator: ", "))
-                    InfoRow(title: "Migration", value: collection.migration)
-                    InfoRow(title: "Reproduction", value: collection.reproduction)
+                    InfoRow(title: "Behavior", value: collection.behavior ?? "Unknown")
+                    InfoRow(title: "Habitat", value: collection.habitatType.isEmpty ? "Unknown" : collection.habitatType.joined(separator: ", "))
+                    InfoRow(title: "Migration", value: collection.migration ?? "Unknown")
+                    InfoRow(title: "Reproduction", value: collection.reproduction ?? "Unknown")
                 }
             }
             .padding(.horizontal, 20)
@@ -189,7 +202,7 @@ struct CollectionDetailView: View {
                     .fontWeight(.bold)
                 
                 VStack(spacing: 8) {
-                    InfoRow(title: "Status", value: collection.endangered)
+                    InfoRow(title: "Status", value: collection.endangered ?? "Unknown")
                 }
             }
             .padding(.horizontal, 20)
@@ -200,7 +213,7 @@ struct CollectionDetailView: View {
                     .font(.title2)
                     .fontWeight(.bold)
                 
-                Text(collection.funFact)
+                Text(collection.funFact ?? "No fun fact available")
                     .font(.body)
                     .foregroundColor(.secondary)
                     .padding()
