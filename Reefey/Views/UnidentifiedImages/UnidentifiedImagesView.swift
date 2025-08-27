@@ -24,6 +24,12 @@ struct UnidentifiedImagesView: View {
     @State private var isProcessing = false
     @State private var processingProgress: Double = 0.0
     
+    // Custom colors matching Figma design
+    private let lightTeal = Color(hex: "E8F4F8")
+    private let offWhite = Color(hex: "F8F9FA")
+    private let lightGray = Color(hex: "E9ECEF")
+    private let darkTeal = Color(hex: "6B9AC4")
+    
     private let columns = [
         GridItem(.flexible()),
         GridItem(.flexible()),
@@ -33,19 +39,18 @@ struct UnidentifiedImagesView: View {
     var body: some View {
         ZStack {
             // Background
-            Color(.systemBackground)
+            offWhite
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // Header
+                // Header section with light teal background
                 headerView
                 
-                // Content - fill remaining space
-                if unidentifiedImages.isEmpty && !isLoading {
-                    emptyStateView
-                } else {
-                    galleryGridView
-                }
+                // Grid section with off-white background
+                gridSection
+                
+                // Identify button at bottom
+                identifyButton
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
@@ -76,124 +81,120 @@ struct UnidentifiedImagesView: View {
     }
     
     private var headerView: some View {
-        VStack(spacing: 0) {
-            // Status bar spacer
-            Rectangle()
-                .fill(Color.clear)
-                .frame(height: 44)
+        ZStack {
+            // Light teal background
+            lightTeal
+                .frame(height: 200)
             
-            // Header content
-            HStack {
-                Button(action: {
-                    dismiss()
-                }) {
-                    Image(systemName: "xmark")
-                        .font(.title2)
-                        .foregroundColor(.white)
-                        .frame(width: 32, height: 32)
-                        .background(Color.black.opacity(0.3))
-                        .clipShape(Circle())
-                }
+            VStack(spacing: 0) {
+                // Status bar spacer
+                Rectangle()
+                    .fill(Color.clear)
+                    .frame(height: 44)
                 
-                Spacer()
-                
-                Text("To be Identified")
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.white)
-                
-                Spacer()
-                
-                HStack(spacing: 12) {
-                    Button(action: {
-                        // Navigate to collections
-                        dismiss()
-                        // Clear navigation path to go back to collections
-                        path.removeAll()
-                    }) {
-                        Image(systemName: "photo.stack")
-                            .font(.subheadline)
-                            .foregroundColor(.white)
-                            .frame(width: 32, height: 32)
-                            .background(Color.black.opacity(0.3))
-                            .clipShape(Circle())
-                    }
+                // Header content
+                HStack {
+                    Text("To be Identified")
+                        .font(.custom("Georgia", size: 24))
+                        .fontWeight(.medium)
+                        .foregroundColor(.black)
                     
-                    Button(action: {
-                        toggleSelectMode()
-                    }) {
-                        Text(isSelecting ? "Cancel" : "Select")
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .background(Color.black.opacity(0.3))
-                            .cornerRadius(20)
-                    }
+                    Spacer()
                     
-                    if !unidentifiedImages.isEmpty {
+                    HStack(spacing: 12) {
                         Button(action: {
-                            clearAllImages()
+                            toggleSelectMode()
                         }) {
-                            Text("Clear All")
+                            Text("Select")
                                 .font(.subheadline)
                                 .fontWeight(.medium)
-                                .foregroundColor(.red)
+                                .foregroundColor(.white)
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 8)
-                                .background(Color.black.opacity(0.3))
+                                .background(lightGray)
                                 .cornerRadius(20)
+                        }
+                        
+                        Button(action: {
+                            dismiss()
+                        }) {
+                            Image(systemName: "xmark")
+                                .font(.title2)
+                                .foregroundColor(darkTeal)
+                                .frame(width: 32, height: 32)
+                                .background(lightGray)
+                                .clipShape(Circle())
                         }
                     }
                 }
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
-            .background(
-                LinearGradient(
-                    colors: [Color.blue.opacity(0.8), Color.blue.opacity(0.6)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
-            
-            // Selection toolbar
-            if isSelecting {
-                selectionToolbar
+                .padding(.horizontal, 20)
+                .padding(.vertical, 16)
+                
+                Spacer()
+                
+                // Question mark icon in bottom-right
+                HStack {
+                    Spacer()
+                    Image(systemName: "questionmark")
+                        .font(.system(size: 60))
+                        .foregroundColor(darkTeal)
+                        .padding(.trailing, 20)
+                        .padding(.bottom, 20)
+                }
             }
         }
     }
     
-    private var selectionToolbar: some View {
-        HStack {
-            Text("\(selectedImages.count) selected")
-                .font(.subheadline)
-                .foregroundColor(.white)
-            
-            Spacer()
-            
-            if !selectedImages.isEmpty {
-                Button("Delete") {
-                    deleteSelectedImages()
-                }
-                .foregroundColor(.red)
-                .font(.subheadline)
-                .fontWeight(.medium)
-                
-                Button("Identify") {
-                    Task {
-                        await batchIdentify()
+    private var gridSection: some View {
+        VStack {
+            if unidentifiedImages.isEmpty && !isLoading {
+                emptyStateView
+            } else {
+                ScrollView {
+                    LazyVGrid(columns: columns, spacing: 1) {
+                        ForEach(Array(unidentifiedImages.enumerated()), id: \.element.assetIdentifier) { index, photoItem in
+                            UnidentifiedImageGridItem(
+                                photoItem: photoItem,
+                                isSelected: selectedImages.contains(photoItem.assetIdentifier),
+                                isSelecting: isSelecting,
+                                badgeNumber: index + 1
+                            ) {
+                                if isSelecting {
+                                    toggleSelection(for: photoItem.assetIdentifier)
+                                } else {
+                                    selectedImageForDetail = photoItem
+                                    showingImageDetail = true
+                                }
+                            }
+                        }
                     }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 20)
                 }
-                .foregroundColor(.green)
-                .font(.subheadline)
-                .fontWeight(.medium)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(offWhite)
+    }
+    
+    private var identifyButton: some View {
+        Button(action: {
+            Task {
+                await batchIdentify()
+            }
+        }) {
+            Text("Identify")
+                .font(.title2)
+                .fontWeight(.semibold)
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(lightTeal)
+                .cornerRadius(12)
+        }
         .padding(.horizontal, 20)
-        .padding(.vertical, 12)
-        .background(Color.black.opacity(0.8))
+        .padding(.bottom, 20)
+        .disabled(selectedImages.isEmpty || isProcessing)
     }
     
     private var emptyStateView: some View {
@@ -203,7 +204,7 @@ struct UnidentifiedImagesView: View {
                 
                 Image(systemName: "photo.stack")
                     .font(.system(size: 80))
-                    .foregroundColor(.gray.opacity(0.6))
+                    .foregroundColor(lightGray)
                 
                 Text("No Unidentified Images")
                     .font(.title2)
@@ -219,42 +220,6 @@ struct UnidentifiedImagesView: View {
                 Spacer()
             }
             .frame(width: geometry.size.width, height: geometry.size.height)
-        }
-    }
-    
-    private var galleryGridView: some View {
-        ScrollView {
-            if isProcessing {
-                VStack(spacing: 20) {
-                    ProgressView(value: processingProgress)
-                        .progressViewStyle(LinearProgressViewStyle())
-                        .padding(.horizontal, 20)
-                    
-                    Text("Processing \(Int(processingProgress * 100))%")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-                .padding(.top, 20)
-            }
-            
-            LazyVGrid(columns: columns, spacing: 12) {
-                ForEach(unidentifiedImages, id: \.assetIdentifier) { photoItem in
-                    UnidentifiedImageGridItem(
-                        photoItem: photoItem,
-                        isSelected: selectedImages.contains(photoItem.assetIdentifier),
-                        isSelecting: isSelecting
-                    ) {
-                        if isSelecting {
-                            toggleSelection(for: photoItem.assetIdentifier)
-                        } else {
-                            selectedImageForDetail = photoItem
-                            showingImageDetail = true
-                        }
-                    }
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 20)
         }
     }
     
@@ -282,7 +247,7 @@ struct UnidentifiedImagesView: View {
         // In a real implementation, you'd filter for specific criteria
         let fetchOptions = PHFetchOptions()
         fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
-        fetchOptions.fetchLimit = 50 // Limit to recent photos
+        fetchOptions.fetchLimit = 9 // Limit to 9 photos for 3x3 grid
         
         let assets = PHAsset.fetchAssets(with: .image, options: fetchOptions)
         
@@ -375,72 +340,59 @@ struct UnidentifiedImageGridItem: View {
     let photoItem: PhotoItem
     let isSelected: Bool
     let isSelecting: Bool
+    let badgeNumber: Int
     let onTap: () -> Void
     
     @State private var uiImage: UIImage?
     @State private var isLoading = true
     
+    // Custom colors
+    private let lightTeal = Color(hex: "E8F4F8")
+    private let lightGray = Color(hex: "E9ECEF")
+    
     var body: some View {
         Button(action: onTap) {
             ZStack {
-                // Image
+                // Image or placeholder
                 Group {
                     if isLoading {
                         ProgressView()
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .background(Color.gray.opacity(0.1))
-                            .cornerRadius(12)
+                            .background(lightGray)
                     } else if let uiImage = uiImage {
                         Image(uiImage: uiImage)
                             .resizable()
                             .aspectRatio(contentMode: .fill)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                             .clipped()
-                            .cornerRadius(12)
                     } else {
                         Image(systemName: "photo")
-                            .foregroundColor(.gray)
+                            .foregroundColor(lightGray)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .background(Color.gray.opacity(0.1))
-                            .cornerRadius(12)
+                            .background(lightGray)
                     }
                 }
                 
-                // Selection overlay
-                if isSelecting {
-                    VStack {
-                        HStack {
-                            Spacer()
-                            Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                                .foregroundColor(isSelected ? .blue : .white)
-                                .font(.title2)
-                                .background(Color.black.opacity(0.3))
-                                .clipShape(Circle())
-                        }
+                // Numbered badge overlay
+                VStack {
+                    HStack {
                         Spacer()
+                        Text("\(badgeNumber)")
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.white)
+                            .frame(width: 20, height: 20)
+                            .background(lightTeal)
+                            .clipShape(Circle())
                     }
-                    .padding(8)
+                    Spacer()
                 }
-                
-                // Failure indicator
-                if !isSelecting {
-                    VStack {
-                        Spacer()
-                        HStack {
-                            Spacer()
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundColor(.orange)
-                                .font(.caption)
-                                .background(Color.black.opacity(0.3))
-                                .clipShape(Circle())
-                        }
-                        .padding(8)
-                    }
-                }
+                .padding(8)
             }
         }
         .buttonStyle(PlainButtonStyle())
         .aspectRatio(1, contentMode: .fit)
+        .background(lightGray)
         .onAppear {
             loadImage()
         }
