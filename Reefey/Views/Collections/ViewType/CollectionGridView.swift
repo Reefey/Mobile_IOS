@@ -17,30 +17,36 @@ struct CollectionGridView: View {
     ]
     
     var body: some View {
-        if collections.isEmpty {
-            VStack(spacing: 20) {
-                Image(systemName: "photo.on.rectangle.angled")
-                    .font(.system(size: 60))
-                    .foregroundColor(.gray.opacity(0.6))
-                
-                Text("No collections yet")
-                    .font(.title2)
-                    .fontWeight(.medium)
-                    .foregroundColor(.gray)
-                
-                Text("Your marine species collections will appear here")
-                    .font(.body)
-                    .foregroundColor(.gray.opacity(0.8))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
-            }
-            .padding(.top, 60)
-        } else {
-            VStack(spacing: 10) {
+        VStack(spacing: 10) {
+            
+            if collections.isEmpty {
+                // Card to be identified (always show this)
+                CardToBeIdentified(path: $path)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+
+                // Empty state
+                VStack(spacing: 20) {
+                    Image(systemName: "photo.on.rectangle.angled")
+                        .font(.system(size: 60))
+                        .foregroundColor(.gray.opacity(0.6))
+                    
+                    Text("No collections yet")
+                        .font(.title2)
+                        .fontWeight(.medium)
+                        .foregroundColor(.gray)
+                    
+                    Text("Your marine species collections will appear here")
+                        .font(.body)
+                        .foregroundColor(.gray.opacity(0.8))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
+                }
+                .padding(.top, 60)
+            } else {
                 // Card to be identified
-                CardToBeIdentified()
-                    .padding(.horizontal, 4)
-                
+                CardToBeIdentified(path: $path)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+
                 // Collections grid
                 LazyVGrid(columns: columns, spacing: 10) {
                     ForEach(collections) { collection in

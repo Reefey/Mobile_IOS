@@ -195,6 +195,17 @@ class NetworkService {
             body: body
         )
     }
+    
+    func batchIdentify(deviceId: String, photos: [String]) async throws -> APIResponse<BatchIdentifyData> {
+        let req = BatchIdentifyRequest(deviceId: deviceId, photos: photos)
+        let encoder = JSONEncoder()
+        let body = try encoder.encode(req)
+        return try await request(
+            endpoint: "/ai/batch-identify-base64",
+            method: .POST,
+            body: body
+        )
+    }
 }
 
 // MARK: - Supporting Types
