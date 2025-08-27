@@ -7,46 +7,109 @@ struct MarineSpecies: Identifiable, Codable, Hashable {
     let scientificName: String
     let category: String
     let rarity: Int
-    let sizeMinCm: Double?
-    let sizeMaxCm: Double?
+    let sizeMinCm: Int
+    let sizeMaxCm: Int
     let habitatType: [String]
-    let diet: String?
-    let behavior: String?
+    let diet: String
+    let behavior: String
     let danger: String
     let venomous: Bool
     let description: String
+    let lifeSpan: String
+    let reproduction: String
+    let migration: String
+    let endangered: String
+    let funFact: String
     let imageUrl: String?
-    let lifeSpan: String?
-    let reproduction: String?
-    let migration: String?
-    let endangered: String?
-    let funFact: String?
-    let foundAtSpots: [MarineSpot]?
-    let totalSpots: Int?
+    let createdAt: String
+    let updatedAt: String
+    let inUserCollection: Bool
+    let hasAnalyzedPhotos: Bool
+    let totalPhotos: Int
+    let userPhotos: [MarinePhoto]
     
     enum CodingKeys: String, CodingKey {
         case id
         case name
-        case scientificName = "scientificName"
+        case scientificName
         case category
         case rarity
-        case sizeMinCm = "sizeMinCm"
-        case sizeMaxCm = "sizeMaxCm"
-        case habitatType = "habitatType"
+        case sizeMinCm
+        case sizeMaxCm
+        case habitatType
         case diet
         case behavior
         case danger
         case venomous
         case description
-        case imageUrl
         case lifeSpan
         case reproduction
         case migration
         case endangered
         case funFact
-        case foundAtSpots
-        case totalSpots
+        case imageUrl
+        case createdAt
+        case updatedAt
+        case inUserCollection
+        case hasAnalyzedPhotos
+        case totalPhotos
+        case userPhotos
     }
+    
+    // Computed properties for date conversion
+    var createdAtDate: Date? {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter.date(from: createdAt)
+    }
+    
+    var updatedAtDate: Date? {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter.date(from: updatedAt)
+    }
+}
+
+struct MarinePhoto: Codable, Hashable {
+    let id: Int
+    let url: String
+    let annotatedUrl: String?
+    let dateFound: String
+    let spotId: Int?
+    let confidence: Double?
+    let boundingBox: BoundingBox?
+    let spots: CollectionSpot?
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case url
+        case annotatedUrl
+        case dateFound
+        case spotId
+        case confidence
+        case boundingBox
+        case spots
+    }
+    
+    // Computed property for date conversion
+    var dateFoundDate: Date? {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter.date(from: dateFound)
+    }
+}
+
+struct BoundingBox: Codable, Hashable {
+    let x: Double
+    let y: Double
+    let width: Double
+    let height: Double
+}
+
+struct CollectionSpot: Codable, Hashable {
+    let name: String
+    let lat: Double
+    let lng: Double
 }
 
 struct MarineSpot: Codable, Hashable {

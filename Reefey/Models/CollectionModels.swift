@@ -1,9 +1,9 @@
 import Foundation
 
-// MARK: - Collection Models
+// MARK: - Collection Models (Legacy - keeping for backward compatibility)
 struct Collection: Identifiable, Codable, Hashable {
     let id: Int
-    let deviceId: String
+    let deviceId: String?
     let marineId: Int
     let species: String
     let scientificName: String
@@ -85,29 +85,15 @@ struct CollectionPhoto: Codable, Hashable {
     }
 }
 
-struct BoundingBox: Codable, Hashable {
-    let x: Double
-    let y: Double
-    let width: Double
-    let height: Double
-}
-
-struct CollectionSpot: Codable, Hashable {
-    let name: String
-    let lat: Double
-    let lng: Double
-}
-
 // MARK: - Collection Filters
 struct CollectionFilters {
     var sort: String?
-    var filterMarine: String?
-    var filterSpot: Int?
-    var filterRarity: Int?
-    var filterCategory: String?
-    var filterDanger: String?
-    var filterDateFrom: String?
-    var filterDateTo: String?
+    var marine: String?
+    var spot: Int?
+    var rarity: Int?
+    var category: String?
+    var danger: String?
+    var venomous: String?
     
     // Convert filters to query parameters
     func toQueryItems() -> [URLQueryItem] {
@@ -116,26 +102,23 @@ struct CollectionFilters {
         if let sort = sort {
             queryItems.append(URLQueryItem(name: "sort", value: sort))
         }
-        if let filterMarine = filterMarine {
-            queryItems.append(URLQueryItem(name: "filterMarine", value: filterMarine))
+        if let marine = marine {
+            queryItems.append(URLQueryItem(name: "marine", value: marine))
         }
-        if let filterSpot = filterSpot {
-            queryItems.append(URLQueryItem(name: "filterSpot", value: "\(filterSpot)"))
+        if let spot = spot {
+            queryItems.append(URLQueryItem(name: "spot", value: "\(spot)"))
         }
-        if let filterRarity = filterRarity {
-            queryItems.append(URLQueryItem(name: "filterRarity", value: "\(filterRarity)"))
+        if let rarity = rarity {
+            queryItems.append(URLQueryItem(name: "rarity", value: "\(rarity)"))
         }
-        if let filterCategory = filterCategory {
-            queryItems.append(URLQueryItem(name: "filterCategory", value: filterCategory))
+        if let category = category {
+            queryItems.append(URLQueryItem(name: "category", value: category))
         }
-        if let filterDanger = filterDanger {
-            queryItems.append(URLQueryItem(name: "filterDanger", value: filterDanger))
+        if let danger = danger {
+            queryItems.append(URLQueryItem(name: "danger", value: danger))
         }
-        if let filterDateFrom = filterDateFrom {
-            queryItems.append(URLQueryItem(name: "filterDateFrom", value: filterDateFrom))
-        }
-        if let filterDateTo = filterDateTo {
-            queryItems.append(URLQueryItem(name: "filterDateTo", value: filterDateTo))
+        if let venomous = venomous {
+            queryItems.append(URLQueryItem(name: "venomous", value: venomous))
         }
         
         return queryItems

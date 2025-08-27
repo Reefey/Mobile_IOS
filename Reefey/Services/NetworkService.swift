@@ -65,7 +65,13 @@ class NetworkService {
 
             print("Response JSON: \(String(data: data, encoding: .utf8) ?? "No data")")
             
-            return try decoder.decode(T.self, from: data)
+            do {
+                return try decoder.decode(T.self, from: data)
+            } catch let decodingError {
+                print("Decoding error: \(decodingError)")
+                print("Response data: \(String(data: data, encoding: .utf8) ?? "No data")")
+                throw NetworkError.decodingError(decodingError)
+            }
         } catch let error as NetworkError {
             throw error
         } catch {
@@ -123,37 +129,14 @@ class NetworkService {
         filters: CollectionFilters? = nil,
         page: Int = 1,
         size: Int = 50
-    ) async throws -> CollectionsResponse {
+    ) async throws -> MarineResponse {
         var queryItems: [URLQueryItem] = [
             URLQueryItem(name: "page", value: "\(page)"),
             URLQueryItem(name: "size", value: "\(size)")
         ]
         
         if let filters = filters {
-            if let sort = filters.sort {
-                queryItems.append(URLQueryItem(name: "sort", value: sort))
-            }
-            if let filterMarine = filters.filterMarine {
-                queryItems.append(URLQueryItem(name: "filterMarine", value: filterMarine))
-            }
-            if let filterSpot = filters.filterSpot {
-                queryItems.append(URLQueryItem(name: "filterSpot", value: "\(filterSpot)"))
-            }
-            if let filterRarity = filters.filterRarity {
-                queryItems.append(URLQueryItem(name: "filterRarity", value: "\(filterRarity)"))
-            }
-            if let filterCategory = filters.filterCategory {
-                queryItems.append(URLQueryItem(name: "filterCategory", value: filterCategory))
-            }
-            if let filterDanger = filters.filterDanger {
-                queryItems.append(URLQueryItem(name: "filterDanger", value: filterDanger))
-            }
-            if let filterDateFrom = filters.filterDateFrom {
-                queryItems.append(URLQueryItem(name: "filterDateFrom", value: filterDateFrom))
-            }
-            if let filterDateTo = filters.filterDateTo {
-                queryItems.append(URLQueryItem(name: "filterDateTo", value: filterDateTo))
-            }
+            queryItems.append(contentsOf: filters.toQueryItems())
         }
         
         return try await request(
@@ -208,6 +191,17 @@ class NetworkService {
         let body = try encoder.encode(req)
         return  try await request(
             endpoint: "/ai/analyze-photo-base64",
+            method: .POST,
+            body: body
+        )
+    }
+    
+    func batchIdentify(deviceId: String, photos: [String]) async throws -> APIResponse<BatchIdentifyData> {
+        let req = BatchIdentifyRequest(deviceId: deviceId, photos: photos)
+        let encoder = JSONEncoder()
+        let body = try encoder.encode(req)
+        return try await request(
+            endpoint: "/ai/batch-identify-base64",
             method: .POST,
             body: body
         )
