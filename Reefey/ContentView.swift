@@ -10,7 +10,7 @@ import SwiftData
 
 enum NavigationPath: Hashable {
     case lockedCamera
-    case collectionDetail(Collection)
+    case collectionDetail(MarineSpecies)
 }
 
 struct ContentView: View {

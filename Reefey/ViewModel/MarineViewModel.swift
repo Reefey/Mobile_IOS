@@ -164,18 +164,13 @@ class MarineViewModel {
     }
     
     func sizeText(for species: MarineSpecies) -> String {
-        guard let sizeMin = species.sizeMinCm else {
-            return "Size unknown"
-        }
+        let sizeMin = species.sizeMinCm
+        let sizeMax = species.sizeMaxCm
         
-        if let sizeMax = species.sizeMaxCm {
-            if sizeMin == sizeMax {
-                return "\(Int(sizeMin)) cm"
-            } else {
-                return "\(Int(sizeMin))-\(Int(sizeMax)) cm"
-            }
+        if sizeMin == sizeMax {
+            return "\(sizeMin) cm"
         } else {
-            return "\(Int(sizeMin))+ cm"
+            return "\(sizeMin)-\(sizeMax) cm"
         }
     }
     

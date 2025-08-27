@@ -7,7 +7,7 @@
 import SwiftUI
 
 struct CollectionListView: View {
-    let collections: [Collection]
+    let collections: [MarineSpecies]
     @Binding var path: [NavigationPath]
     
     var body: some View {
@@ -62,7 +62,7 @@ struct CollectionListView: View {
 }
 
 struct CollectionListItem: View {
-    let collection: Collection
+    let collection: MarineSpecies
     let onTap: () -> Void
     
     var body: some View {
@@ -70,7 +70,7 @@ struct CollectionListItem: View {
             HStack(alignment: .top, spacing: 20) {
                 // Collection Image
                 ZStack {
-                    if let imageURL = collection.marineImageUrl {
+                    if let imageURL = collection.imageUrl {
                         AsyncImage(url: URL(string: imageURL)) { image in
                             image
                                 .resizable()
@@ -97,7 +97,7 @@ struct CollectionListItem: View {
                 // Collection Info
                 VStack(alignment: .leading) {
                     // Title
-                    Text(collection.species)
+                    Text(collection.name)
                         .font(.title2)
                         .foregroundColor(.primary)
                         .lineLimit(2)
