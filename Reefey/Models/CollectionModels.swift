@@ -113,6 +113,8 @@ struct CollectionFilters {
         }
         if let category = category {
             queryItems.append(URLQueryItem(name: "category", value: category))
+        } else if category == "All" {
+            queryItems.append(URLQueryItem(name: "category", value: ""))
         }
         if let danger = danger {
             queryItems.append(URLQueryItem(name: "danger", value: danger))
