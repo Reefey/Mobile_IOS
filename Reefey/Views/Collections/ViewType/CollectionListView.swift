@@ -20,7 +20,7 @@ struct CollectionListView: View {
                 Spacer()
                 
                 // Card to be identified (always show this)
-                CardToBeIdentified()
+                CardToBeIdentified(path: $path)
                     .padding(.horizontal, 16)
                     .padding(.bottom, 32)
                 
@@ -48,7 +48,7 @@ struct CollectionListView: View {
         } else {
             List {
                 // Card to be identified
-                CardToBeIdentified()
+                CardToBeIdentified(path: $path)
                     .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                 
                 // Collections list

@@ -8,29 +8,34 @@
 import SwiftUI
 
 struct CardToBeIdentified: View {
+    @Binding var path: [NavigationPath]
     var body: some View {
-        HStack {
-            Image(systemName: "questionmark")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 20)
-                .foregroundStyle(Color.primary)
-                .colorInvert()
-            VStack {
-                Text("To be identified")
-                    .fontWeight(.semibold)
+        Button{
+            path = [.toBeIdentified]
+        } label : {
+            HStack {
+                Image(systemName: "questionmark")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 20)
                     .foregroundStyle(Color.primary)
                     .colorInvert()
-                    .padding(.bottom, 10)
+                VStack {
+                    Text("To be identified")
+                        .fontWeight(.semibold)
+                        .foregroundStyle(Color.primary)
+                        .colorInvert()
+                        .padding(.bottom, 10)
+                }
+                Spacer()
             }
-            Spacer()
-        }
-        .padding()
-        .background(Color(hex: "0FAAAC"))
-        .cornerRadius(10)
+            .padding()
+            .background(Color(hex: "0FAAAC"))
+            .cornerRadius(10)
+        }.buttonStyle(PlainButtonStyle())
     }
 }
 
 #Preview {
-    CardToBeIdentified()
+    CardToBeIdentified(path: .constant([]))
 }

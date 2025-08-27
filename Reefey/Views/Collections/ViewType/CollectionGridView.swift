@@ -25,7 +25,7 @@ struct CollectionGridView: View {
                 Spacer()
                 
                 // Card to be identified (always show this)
-                CardToBeIdentified()
+                CardToBeIdentified(path: $path)
                     .padding(.horizontal, 16)
                     .padding(.bottom, 32)
                 
@@ -53,7 +53,7 @@ struct CollectionGridView: View {
         } else {
             VStack(spacing: 10) {
                 // Card to be identified
-                CardToBeIdentified()
+                CardToBeIdentified(path: $path)
                     .padding(.horizontal, 4)
                 
                 // Collections grid
