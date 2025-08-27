@@ -53,6 +53,10 @@ extension CameraView {
     }
     
     func viewUnidentifiedImages() {
-        // Handle view unidentified images action
+        cameraShow = false
+        isShowIdentifyDialog = false
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            path = [.toBeIdentified]
+        }
     }
 }

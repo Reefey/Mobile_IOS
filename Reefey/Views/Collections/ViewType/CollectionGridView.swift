@@ -162,6 +162,7 @@ struct CollectionGridItem: View {
             .cornerRadius(12)
         }
         .buttonStyle(PlainButtonStyle())
+        .frame(height: 220)
     }
 }
 

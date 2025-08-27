@@ -119,8 +119,11 @@ struct CameraView: View {
                 isShowIdentifyDialog = true
                 identifyDialogState = .UNLOCK(
                     viewUnidentifiedAction: {
+                        cameraShow = false
                         isShowIdentifyDialog = false
-                        // Handle view unidentified images action
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            path = [.toBeIdentified]
+                        }
                     },
                     dismissAction: {
                         isShowIdentifyDialog = false
