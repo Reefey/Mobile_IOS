@@ -10,6 +10,7 @@ import AVFoundation
 import UIKit
 import SwiftUI
 import Photos
+import SwiftData
 
 @Observable
 final class CameraViewModel: BaseCameraViewModel {
@@ -53,7 +54,46 @@ final class CameraViewModel: BaseCameraViewModel {
         }
     }
     
-    // Note: SwiftData functionality removed - failed attempts are now handled by direct Photos library access
+    private var modelContext: ModelContext?
+    
+    func setModelContext(_ context: ModelContext) {
+        self.modelContext = context
+    }
+    
+    func saveToSwiftData(photoAssetIdentifier: String, failureReason: String, imageData: Data? = nil, context: ModelContext) {
+        // Check if this image already exists in SwiftData
+        let descriptor = FetchDescriptor<UnidentifiedImageModel>(
+            predicate: #Predicate<UnidentifiedImageModel> { $0.photoAssetIdentifier == photoAssetIdentifier }
+        )
+        
+        do {
+            let existingImages = try context.fetch(descriptor)
+            
+            if let existingImage = existingImages.first {
+                // Update existing image with new failure info
+                existingImage.updateRetryInfo(failureReason: failureReason)
+                if let imageData = imageData {
+                    existingImage.imageData = imageData
+                }
+                print("Updated existing unidentified image with retry info")
+            } else {
+                // Create a new UnidentifiedImageModel object and save to SwiftData
+                let unidentifiedImage = UnidentifiedImageModel(
+                    photoAssetIdentifier: photoAssetIdentifier,
+                    dateTaken: Date(),
+                    failureReason: failureReason
+                )
+                unidentifiedImage.imageData = imageData
+                context.insert(unidentifiedImage)
+                print("Created new unidentified image entry")
+            }
+            
+            try context.save()
+            print("Photo reference saved to SwiftData due to AI failure")
+        } catch {
+            print("Error saving to SwiftData: \(error)")
+        }
+    }
     
     func sendToAI(pngImage: Data) async throws -> MarineData {
         print("Sending binary image data...")
@@ -130,6 +170,40 @@ final class CameraViewModel: BaseCameraViewModel {
                             // Other errors - treat as unidentified
                             self.onAIFailure?(identifier)
                             self.onAIUnidentified?()
+                        }
+                        
+                        // Save failed attempt to SwiftData
+                        if let context = self.modelContext {
+                            let failureReason: String
+                            
+                            // Check if it's a network connectivity issue
+                            if let networkError = error as? NetworkError {
+                                print("NetworkError detected: \(networkError)")
+                                switch networkError {
+                                case .custom(let message) where message.contains("Rate limit exceeded") || message.contains("RATE_LIMIT_EXCEEDED"):
+                                    // Rate limit exceeded - show rate limit dialog
+                                    failureReason = "Rate limit exceeded"
+                                    print("Rate limit detected with message: \(message)")
+                                case .httpError(let statusCode) where statusCode == 429:
+                                    // Rate limit exceeded (HTTP 429) - show rate limit dialog
+                                    print("HTTP 429 Rate limit detected")
+                                    failureReason = "Rate limit exceeded"
+                                case .invalidURL, .invalidResponse, .httpError, .noData:
+                                    // Network connectivity issues - show offline dialog
+                                    failureReason = "Network unavailable"
+                                case .decodingError, .custom:
+                                    // AI processing issues - show unidentified dialog
+                                    failureReason = "AI processing failed"
+                                }
+                            } else if (error as NSError).domain == NSURLErrorDomain {
+                                // URL loading system errors (network issues)
+                                failureReason = "Network unavailable"
+                            } else {
+                                // Other errors - treat as unidentified
+                                failureReason = "AI processing failed"
+                            }
+                            
+                            self.saveToSwiftData(photoAssetIdentifier: identifier, failureReason: failureReason, imageData: resizedImage, context: context)
                         }
                     }
                 }
