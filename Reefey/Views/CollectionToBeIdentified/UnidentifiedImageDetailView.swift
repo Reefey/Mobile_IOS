@@ -54,8 +54,11 @@ struct UnidentifiedImageDetailView: View {
                                 // Close the current view first
                                 isPresented = false
                                 // Navigate to detail after a small delay to ensure sheet is dismissed
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                    path = [.marineDetail(marineId)]
+                                Task {
+                                    try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+                                    await MainActor.run {
+                                        path = [.marineDetail(marineId)]
+                                    }
                                 }
                             }
                         }

@@ -10,6 +10,10 @@ import SwiftData
 
 @main
 struct ReefeyApp: App {
+    init() {
+        UINavigationBar.appearance().titleTextAttributes = [.font: UIFont(name: "EBGaramond-Regular", size: 24) ?? UIFont.systemFont(ofSize: 24)]
+        UINavigationBar.appearance().largeTitleTextAttributes = [.font: UIFont(name: "EBGaramond-Regular", size: 40) ?? UIFont.systemFont(ofSize: 40)]
+    }
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             UnidentifiedImageModel.self

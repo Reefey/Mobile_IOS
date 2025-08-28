@@ -69,12 +69,12 @@ class CollectionsViewModel {
                 hasMoreData = response.pagination?.hasNext ?? false
                 currentPage += 1
             } else {
-                // Don't show error message, just log it
+                errorMessage = response.error ?? "Failed to load collections"
                 print("Failed to load collections: \(response.error ?? "Unknown error")")
             }
             
         } catch {
-            // Don't show error message, just log it
+            errorMessage = "Network error: \(error.localizedDescription)"
             print("Error loading collections: \(error.localizedDescription)")
         }
         
@@ -176,7 +176,7 @@ class CollectionsViewModel {
         filters.category = selectedCategory == "ALL" ? nil : selectedCategory
         filters.filterRarity = selectedRarity
         filters.filterDanger = selectedDanger == "ALL" ? nil : selectedDanger
-        filters.filterMarine = searchText.isEmpty ? nil : searchText
+        filters.q = searchText.isEmpty ? nil : searchText
     }
     
     func collection(for id: Int) -> Collection? {

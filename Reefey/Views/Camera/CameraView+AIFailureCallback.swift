@@ -55,8 +55,11 @@ extension CameraView {
     func viewUnidentifiedImages() {
         cameraShow = false
         isShowIdentifyDialog = false
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            path = [.toBeIdentified]
+        Task {
+            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+            await MainActor.run {
+                path = [.toBeIdentified]
+            }
         }
     }
 }

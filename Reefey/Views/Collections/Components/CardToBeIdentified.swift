@@ -14,23 +14,31 @@ struct CardToBeIdentified: View {
             path = [.toBeIdentified]
         } label : {
             HStack {
-                Image(systemName: "questionmark")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 20)
-                    .foregroundStyle(Color.primary)
-                    .colorInvert()
+//                Image(systemName: "questionmark")
+//                    .resizable()
+//                    .scaledToFit()
+//                    .frame(width: 20)
+//                    .foregroundStyle(Color(hex: "#145B55"))
                 VStack {
                     Text("To be identified")
+                        .font(.custom("EBGaramond-Regular", size: 24, relativeTo: .body))
                         .fontWeight(.semibold)
-                        .foregroundStyle(Color.primary)
-                        .colorInvert()
-                        .padding(.bottom, 10)
+                        .foregroundStyle(Color(hex: "#145B55"))
+                        .padding(.bottom, 35)
                 }
                 Spacer()
+                
             }
             .padding()
-            .background(Color(hex: "0FAAAC"))
+            .background(
+                ZStack {
+                    Image("BannerButton")
+                        .resizable()
+                        .scaledToFill()
+                    Color.white.opacity(0.1)
+                }
+                
+            )
             .cornerRadius(10)
         }.buttonStyle(PlainButtonStyle())
     }

@@ -13,6 +13,11 @@ struct CollectionsView : View {
     @State private var selectedView: CollectionViewTypeEnum = .LIST
     @State private var showDebugView = false
     
+    init(path: Binding<[NavigationPath]>, cameraShow: Binding<Bool>) {
+        _path = path
+        _cameraShow = cameraShow
+    }
+    
     var body: some View {
         ZStack {
             VStack {
@@ -138,10 +143,15 @@ struct CollectionsView : View {
         .searchable(text: $viewModel.searchText)
         .onChange(of: viewModel.searchText) { _, _ in
             Task {
+                try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 second debounce
                 await viewModel.searchCollections()
             }
         }
-        .navigationTitle("Collections")
+        .navigationTitle(
+            Text("Collections")
+                .italic()
+//                .font(.custom("EBGaramond-Regular", size: 24))
+        )
         .sheet(isPresented: $cameraShow){
             CameraView(path: $path, cameraShow: $cameraShow)
         }

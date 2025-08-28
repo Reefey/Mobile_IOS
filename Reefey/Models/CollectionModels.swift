@@ -137,7 +137,7 @@ struct CollectionSpot: Codable, Hashable {
 // MARK: - Collection Filters
 struct CollectionFilters {
     var sort: String?
-    var filterMarine: String?
+    var q: String?
     var filterSpot: Int?
     var filterRarity: Int?
     var category: String?
@@ -152,8 +152,8 @@ struct CollectionFilters {
         if let sort = sort {
             queryItems.append(URLQueryItem(name: "sort", value: sort))
         }
-        if let filterMarine = filterMarine {
-            queryItems.append(URLQueryItem(name: "filterMarine", value: filterMarine))
+        if let q = q {
+            queryItems.append(URLQueryItem(name: "q", value: q))
         }
         if let filterSpot = filterSpot {
             queryItems.append(URLQueryItem(name: "filterSpot", value: "\(filterSpot)"))

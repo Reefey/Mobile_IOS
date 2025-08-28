@@ -5,16 +5,29 @@ class NetworkService: @unchecked Sendable {
     static let shared = NetworkService()
     
     private let baseURL = "https://586b5915665f.ngrok-free.app/api" // Real API base URL
-    private let session = URLSession.shared
+    private let session: URLSession
     
-    private init() {}
+    private init() {
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 30.0 // 30 seconds for request timeout
+        config.timeoutIntervalForResource = 60.0 // 60 seconds for total resource timeout
+        config.waitsForConnectivity = true
+        config.allowsConstrainedNetworkAccess = false
+        config.allowsExpensiveNetworkAccess = true
+        self.session = URLSession(configuration: config)
+    }
     
-    // MARK: - Generic Request Method
+    // MARK: - Retry Configuration
+    private let maxRetries = 3
+    private let baseDelay: TimeInterval = 1.0
+    
+    // MARK: - Generic Request Method with Retry Logic
     private func request<T: Codable>(
         endpoint: String,
         method: HTTPMethod = .GET,
         body: Data? = nil,
-        queryItems: [URLQueryItem]? = nil
+        queryItems: [URLQueryItem]? = nil,
+        retryCount: Int = 0
     ) async throws -> T {
         guard var urlComponents = URLComponents(string: baseURL + endpoint) else {
             throw NetworkError.invalidURL
@@ -48,10 +61,19 @@ class NetworkService: @unchecked Sendable {
         print("---")
         
         do {
-            let (data, response) = try await session.data(for: request)
+            let (data, response) = try await withTimeout(seconds: 45) {
+                try await self.session.data(for: request)
+            }
             
             guard let httpResponse = response as? HTTPURLResponse else {
                 throw NetworkError.invalidResponse
+            }
+            
+            // Handle specific HTTP status codes that might warrant retry
+            if shouldRetry(statusCode: httpResponse.statusCode, retryCount: retryCount) {
+                let delay = baseDelay * pow(2.0, Double(retryCount)) // Exponential backoff
+                try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                return try await self.request(endpoint: endpoint, method: method, body: body, queryItems: queryItems, retryCount: retryCount + 1)
             }
             
             guard 200...299 ~= httpResponse.statusCode else {
@@ -86,9 +108,54 @@ class NetworkService: @unchecked Sendable {
                 throw NetworkError.decodingError(error)
             }
         } catch let error as NetworkError {
+            // Don't retry decoding errors or client errors
             throw error
         } catch {
-            throw NetworkError.decodingError(error)
+            // Network-level errors - retry if possible
+            if shouldRetry(error: error, retryCount: retryCount) {
+                let delay = baseDelay * pow(2.0, Double(retryCount)) // Exponential backoff
+                try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                return try await self.request(endpoint: endpoint, method: method, body: body, queryItems: queryItems, retryCount: retryCount + 1)
+            }
+            throw NetworkError.custom(error.localizedDescription)
+        }
+    }
+    
+    // MARK: - Retry Logic Helpers
+    private func shouldRetry(statusCode: Int, retryCount: Int) -> Bool {
+        guard retryCount < maxRetries else { return false }
+        
+        // Retry on server errors (5xx) and rate limiting (429)
+        return statusCode >= 500 || statusCode == 429
+    }
+    
+    private func shouldRetry(error: Error, retryCount: Int) -> Bool {
+        guard retryCount < maxRetries else { return false }
+        
+        // Retry on network-level errors
+        let nsError = error as NSError
+        return nsError.domain == NSURLErrorDomain &&
+        (nsError.code == NSURLErrorTimedOut ||
+         nsError.code == NSURLErrorCannotConnectToHost ||
+         nsError.code == NSURLErrorNetworkConnectionLost ||
+         nsError.code == NSURLErrorNotConnectedToInternet)
+    }
+    
+    // MARK: - Timeout Helper
+    private func withTimeout<T>(seconds: TimeInterval, operation: @escaping () async throws -> T) async throws -> T {
+        return try await withThrowingTaskGroup(of: T.self) { group in
+            group.addTask {
+                try await operation()
+            }
+            
+            group.addTask {
+                try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+                throw NetworkError.custom("Request timed out after \(seconds) seconds")
+            }
+            
+            let result = try await group.next()!
+            group.cancelAll()
+            return result
         }
     }
     
@@ -152,8 +219,8 @@ class NetworkService: @unchecked Sendable {
             if let sort = filters.sort {
                 queryItems.append(URLQueryItem(name: "sort", value: sort))
             }
-            if let filterMarine = filters.filterMarine {
-                queryItems.append(URLQueryItem(name: "filterMarine", value: filterMarine))
+            if let q = filters.q {
+                queryItems.append(URLQueryItem(name: "q", value: q))
             }
             if let filterSpot = filters.filterSpot {
                 queryItems.append(URLQueryItem(name: "filterSpot", value: "\(filterSpot)"))

@@ -191,8 +191,11 @@ public final class VolumeButtonHandler: NSObject {
     private func setSystemVolume(_ volume: Float) {
         //find the volumeSlider
         let volumeViewSlider = volumeView.subviews.first { $0 is UISlider } as? UISlider
-        DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.01) {
-            volumeViewSlider?.value = volume
+        Task {
+            try? await Task.sleep(nanoseconds: 10_000_000) // 0.01 seconds
+            await MainActor.run {
+                volumeViewSlider?.value = volume
+            }
         }
     }
 

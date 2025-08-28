@@ -10,9 +10,22 @@
 		F5EE4D2E2E4EFA00006D94F1 /* Reefey.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Reefey.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		F52A867D2E60343100A2D699 /* Exceptions for "Reefey" folder in "Reefey" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = F5EE4D2D2E4EFA00006D94F1 /* Reefey */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		F5EE4D302E4EFA00006D94F1 /* Reefey */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				F52A867D2E60343100A2D699 /* Exceptions for "Reefey" folder in "Reefey" target */,
+			);
 			path = Reefey;
 			sourceTree = "<group>";
 		};
@@ -257,6 +270,7 @@
 				DEVELOPMENT_TEAM = 9Q2V696PGB;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Reefey/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Needed for accesing camera";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Save picture to gallery";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -291,6 +305,7 @@
 				DEVELOPMENT_TEAM = 9Q2V696PGB;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Reefey/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Needed for accesing camera";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Save picture to gallery";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

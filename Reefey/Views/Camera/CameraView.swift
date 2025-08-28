@@ -106,11 +106,24 @@ struct CameraView: View {
                         // Close the camera sheet first
                         cameraShow = false
                         // Then navigate to detail after a small delay to ensure sheet is dismissed
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            path = [.marineDetail(marineId)]
+                        Task {
+                            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+                            await MainActor.run {
+                                path = [.marineDetail(marineId)]
+                            }
                         }
                     }
                 )
+            }
+        }
+        .onDisappear {
+            // Stop camera session when view disappears
+            VM.cleanup()
+        }
+        .onChange(of: cameraShow) { _, newValue in
+            if !newValue {
+                // Clean up when camera is being dismissed
+                VM.cleanup()
             }
         }
         .onAppear {
@@ -121,8 +134,11 @@ struct CameraView: View {
                     viewUnidentifiedAction: {
                         cameraShow = false
                         isShowIdentifyDialog = false
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            path = [.toBeIdentified]
+                        Task {
+                            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+                            await MainActor.run {
+                                path = [.toBeIdentified]
+                            }
                         }
                     },
                     dismissAction: {

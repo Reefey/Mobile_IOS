@@ -36,28 +36,39 @@ struct CollectionToBeIdentifiedView: View {
     private var headerSection: some View {
         ZStack {
             headerPlaceholder
+//            VStack {
+//                Spacer()
+//                    .frame(height: 30)
+//                HStack {
+//                    Spacer()
+//                    Button {
+//                        isSelectButtonTapped.toggle()
+//                    } label: {
+//                        Text(isSelectButtonTapped == true ? "Cancel" : "Select")
+//                            .font(.body)
+//                            .fontWeight(.semibold)
+//                            .foregroundStyle(.gray.opacity(0.9))
+//                    }
+//                    .padding(.vertical, 3)
+//                    .padding(.horizontal, 10)
+//                    .buttonStyle(PlainButtonStyle())
+//                    .background(.ultraThickMaterial)
+//                    .cornerRadius(10)
+//                    Spacer()
+//                        .frame(width: 20)
+//                }.padding()
+//                Spacer()
+//            }
+            Color.white.opacity(0.3)
             VStack {
-                Spacer()
-                    .frame(height: 30)
                 HStack {
+                    Text("To be Identified")
+                        .font(.custom("EBGaramond-Regular", size: 32, relativeTo: .title2))
+                        .fontWeight(.semibold)
+                        .foregroundStyle(Color(hex: "#145B55"))
+                        .padding(.bottom, 35)
                     Spacer()
-                    Button {
-                        isSelectButtonTapped.toggle()
-                    } label: {
-                        Text(isSelectButtonTapped == true ? "Cancel" : "Select")
-                            .font(.body)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(.gray.opacity(0.9))
-                    }
-                    .padding(.vertical, 3)
-                    .padding(.horizontal, 10)
-                    .buttonStyle(PlainButtonStyle())
-                    .background(.ultraThickMaterial)
-                    .cornerRadius(10)
-                    Spacer()
-                        .frame(width: 20)
                 }.padding()
-                Spacer()
             }
         }
         .frame(maxHeight: 300)
@@ -74,7 +85,9 @@ struct CollectionToBeIdentifiedView: View {
                 )
             )
             .overlay(
-                Image(systemName: "fish.fill")
+                Image("UnidentifiedScreenIllustration")
+                    .resizable()
+                    .scaledToFill()
                     .font(.system(size: 60))
                     .foregroundColor(.white.opacity(0.6))
             )
@@ -104,6 +117,7 @@ struct CollectionToBeIdentifiedView: View {
                     }
                     Spacer()
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color(UIColor.systemBackground))
             } else {
                 ScrollView {

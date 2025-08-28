@@ -113,30 +113,38 @@ struct CollectionDetailView: View {
     }
     
     private var headerSection: some View {
-        ZStack {
-            // Main header image
-            if let imageURL = collection.marineImageUrl {
-                AsyncImage(url: URL(string: imageURL)) { image in
-                    image
-                        .resizable()
-                        .scaledToFill()
-                } placeholder: {
+        GeometryReader { geometry in
+            ZStack {
+                // Main header image
+                if let imageURL = collection.marineImageUrl {
+                    AsyncImage(url: URL(string: imageURL)) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: geometry.size.width, height: min(300, geometry.size.width * 0.75))
+                            .clipped()
+                    } placeholder: {
+                        headerPlaceholder
+                            .frame(width: geometry.size.width, height: min(300, geometry.size.width * 0.75))
+                    }
+                } else if let marineSpecies = marineSpecies, let imageURL = marineSpecies.imageUrl {
+                    AsyncImage(url: URL(string: imageURL)) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: geometry.size.width, height: min(300, geometry.size.width * 0.75))
+                            .clipped()
+                    } placeholder: {
+                        headerPlaceholder
+                            .frame(width: geometry.size.width, height: min(300, geometry.size.width * 0.75))
+                    }
+                } else {
                     headerPlaceholder
+                        .frame(width: geometry.size.width, height: min(300, geometry.size.width * 0.75))
                 }
-            } else if let marineSpecies = marineSpecies, let imageURL = marineSpecies.imageUrl {
-                AsyncImage(url: URL(string: imageURL)) { image in
-                    image
-                        .resizable()
-                        .scaledToFill()
-                } placeholder: {
-                    headerPlaceholder
-                }
-            } else {
-                headerPlaceholder
             }
         }
         .frame(maxHeight: 300)
-        .clipped()
     }
     
     private var headerPlaceholder: some View {
