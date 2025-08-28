@@ -4,6 +4,7 @@ import Photos
 
 // MARK: - Collection To Be Identified View
 struct CollectionToBeIdentifiedView: View {
+    @Binding var path: [NavigationPath]
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \UnidentifiedImageModel.dateTaken, order: .reverse) private var unidentifiedImages: [UnidentifiedImageModel]
@@ -26,7 +27,8 @@ struct CollectionToBeIdentifiedView: View {
             UnidentifiedImageDetailView(
                 images: unidentifiedImages,
                 selectedIndex: $selectedImageIndex,
-                isPresented: $showingImageDetail
+                isPresented: $showingImageDetail,
+                path: $path
             )
         }
     }
@@ -137,6 +139,6 @@ struct CollectionToBeIdentifiedView: View {
 }
 
 #Preview {
-    CollectionToBeIdentifiedView()
+    CollectionToBeIdentifiedView(path: .constant([]))
         .modelContainer(for: UnidentifiedImageModel.self, inMemory: true)
 }

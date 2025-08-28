@@ -14,6 +14,9 @@ struct UnidentifiedImageDetailView: View {
     let images: [UnidentifiedImageModel]
     @Binding var selectedIndex: Int
     @Binding var isPresented: Bool
+    @Binding var path: [NavigationPath]
+    @Environment(\.modelContext) private var modelContext
+    @State private var viewModel = UnidentifiedImageDetailViewModel()
     
     var body: some View {
         ZStack {
@@ -46,20 +49,43 @@ struct UnidentifiedImageDetailView: View {
                 HStack {
                     Spacer()
                     Button {
-                        
+                        Task {
+                            await viewModel.analyzeImage(images[selectedIndex], modelContext: modelContext) { marineId in
+                                // Close the current view first
+                                isPresented = false
+                                // Navigate to detail after a small delay to ensure sheet is dismissed
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                    path = [.marineDetail(marineId)]
+                                }
+                            }
+                        }
                     } label: {
-                        Text("Analyze")
-                            .foregroundStyle(.white)
-                            .fontWeight(.bold)
+                        if viewModel.isAnalyzing {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                .scaleEffect(0.8)
+                        } else {
+                            Text("Identify")
+                                .foregroundStyle(.white)
+                                .fontWeight(.bold)
+                        }
                     }
                     .padding()
                     .buttonStyle(PlainButtonStyle())
+                    .disabled(viewModel.isAnalyzing)
                     Spacer()
                 }
                 .background(Color(hex: "#0FAAAC"))
                 .cornerRadius(20)
                 
             }.padding()
+        }
+        .alert("Analysis Error", isPresented: .constant(viewModel.errorMessage != nil)) {
+            Button("OK") {
+                viewModel.errorMessage = nil
+            }
+        } message: {
+            Text(viewModel.errorMessage ?? "")
         }
     }
 }
@@ -74,6 +100,7 @@ struct UnidentifiedImageDetailView: View {
             )
         ],
         selectedIndex: .constant(0),
-        isPresented: .constant(true)
+        isPresented: .constant(true),
+        path: .constant([])
     )
 }

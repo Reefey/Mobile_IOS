@@ -33,7 +33,7 @@ struct ContentView: View {
                         case .marineDetail(let marineId):
                             CollectionDetailViewWithLoader(marineId: marineId)
                         case .toBeIdentified:
-                            CollectionToBeIdentifiedView()
+                            CollectionToBeIdentifiedView(path: $navigationPath)
                         }
                     }
             }
