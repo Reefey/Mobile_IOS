@@ -32,7 +32,8 @@ struct CollectionGridView: View {
                 Spacer()
                 
                 VStack(spacing: 16) {
-                    Image(ThumbnailMapper.getRandomThumbnailAssetName())
+                                         // Use default thumbnail asset for empty state
+                     Image(ThumbnailMapper.getDefaultThumbnailAssetName())
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .frame(width: 80, height: 80)
@@ -114,7 +115,7 @@ struct CollectionGridItem: View {
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
                         } else {
-                            Image(ThumbnailMapper.getRandomThumbnailAssetName())
+                            Image(ThumbnailMapper.getDefaultThumbnailAssetName())
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
                         }

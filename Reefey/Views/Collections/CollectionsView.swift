@@ -236,7 +236,7 @@ struct CollectionsView : View {
             
             VStack(spacing: 16) {
                 // Use a random thumbnail asset for empty state
-                Image(ThumbnailMapper.getRandomThumbnailAssetName())
+                Image(ThumbnailMapper.getDefaultThumbnailAssetName())
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 80, height: 80)

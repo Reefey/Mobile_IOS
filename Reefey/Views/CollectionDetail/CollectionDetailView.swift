@@ -513,7 +513,8 @@ struct CollectionPhotoView: View {
             .fill(Color.gray.opacity(0.2))
             .overlay(
                 VStack(spacing: 4) {
-                    Image(ThumbnailMapper.getRandomThumbnailAssetName())
+                    // Use default thumbnail asset as placeholder
+                    Image(ThumbnailMapper.getDefaultThumbnailAssetName())
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .frame(width: 40, height: 40)
@@ -582,8 +583,8 @@ struct ImageDetailView: View {
                                 Rectangle()
                                     .fill(Color.black.opacity(0.3))
                                 
-                                // Use a random thumbnail asset as placeholder
-                                Image(ThumbnailMapper.getRandomThumbnailAssetName())
+                                // Use default thumbnail asset as placeholder
+                                Image(ThumbnailMapper.getDefaultThumbnailAssetName())
                                     .resizable()
                                     .aspectRatio(contentMode: .fit)
                                     .frame(maxWidth: 120, maxHeight: 120)

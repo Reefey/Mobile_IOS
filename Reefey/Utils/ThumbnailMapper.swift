@@ -8,7 +8,7 @@ import Foundation
 
 struct ThumbnailMapper {
     // Dictionary mapping scientific name prefixes (first two words) to thumbnail asset names
-    // Based on the marine_rows-3.csv file scientific names
+    // Only includes assets that actually exist in the Assets.xcassets/thumbnail directory
     private static let scientificNameToThumbnail: [String: String] = [
         // Fishes
         "amphiprion ocellaris": "amphiprion_ocellaris", // Clownfish
@@ -93,14 +93,13 @@ struct ThumbnailMapper {
         return scientificNameToThumbnail[prefix]
     }
     
-    /// Returns a random thumbnail asset name for fallback
-    static func getRandomThumbnailAssetName() -> String {
-        let assetNames = Array(scientificNameToThumbnail.values)
-        return assetNames.randomElement() ?? "acanthaster_planci"
-    }
-    
     /// Returns the default thumbnail asset name when no specific thumbnail is available
     static func getDefaultThumbnailAssetName() -> String {
         return "Miscellaneous"
+    }
+    
+    /// Checks if a specific thumbnail asset exists for the given scientific name
+    static func hasThumbnailAsset(for scientificName: String) -> Bool {
+        return getThumbnailAssetName(for: scientificName) != nil
     }
 }
