@@ -140,19 +140,31 @@ struct CollectionDetailView: View {
     }
     
     private var headerPlaceholder: some View {
-        Rectangle()
-            .fill(
-                LinearGradient(
-                    colors: [.gray.opacity(0.4), .gray.opacity(0.2)],
-                    startPoint: .top,
-                    endPoint: .bottom
+        ZStack {
+            Rectangle()
+                .fill(
+                    LinearGradient(
+                        colors: [.gray.opacity(0.4), .gray.opacity(0.2)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
                 )
-            )
-            .overlay(
+            
+            // Use thumbnail asset if available
+            if let scientificName = collection.scientificName,
+               let thumbnailAssetName = ThumbnailMapper.getThumbnailAssetName(for: scientificName) {
+                Image(thumbnailAssetName)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxWidth: 120, maxHeight: 120)
+                    .foregroundColor(.white.opacity(0.8))
+            } else {
+                // Fallback to system icon
                 Image(systemName: "fish.fill")
                     .font(.system(size: 60))
                     .foregroundColor(.white.opacity(0.6))
-            )
+            }
+        }
     }
     
     private var tabSelectionView: some View {
@@ -187,20 +199,32 @@ struct CollectionDetailView: View {
             if collection.photos.isEmpty {
                 VStack {
                     Spacer()
-                    VStack(spacing: 12) {
-                        Image(systemName: "photo.on.rectangle.angled")
-                            .font(.system(size: 48))
-                            .foregroundColor(.gray.opacity(0.6))
+                    VStack(spacing: 16) {
+                        // Use thumbnail asset if available
+                        if let scientificName = collection.scientificName,
+                           let thumbnailAssetName = ThumbnailMapper.getThumbnailAssetName(for: scientificName) {
+                            Image(thumbnailAssetName)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 80, height: 80)
+                                .foregroundColor(.gray.opacity(0.6))
+                        } else {
+                            Image(systemName: "photo.on.rectangle.angled")
+                                .font(.system(size: 48))
+                                .foregroundColor(.gray.opacity(0.6))
+                        }
                         
-                        Text("No photos available")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.gray)
-                        
-                        Text("Photos will appear here once they are added to this collection")
-                            .font(.system(size: 14))
-                            .foregroundColor(.gray.opacity(0.8))
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 32)
+                        VStack(spacing: 8) {
+                            Text("No photos available")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.gray)
+                            
+                            Text("Photos will appear here once they are added to this collection")
+                                .font(.system(size: 14))
+                                .foregroundColor(.gray.opacity(0.8))
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 32)
+                        }
                     }
                     Spacer()
                 }
@@ -480,9 +504,12 @@ struct CollectionPhotoView: View {
             .fill(Color.gray.opacity(0.2))
             .overlay(
                 VStack(spacing: 4) {
-                    Image(systemName: "photo")
-                        .font(.system(size: 24))
-                        .foregroundColor(.gray)
+                    // Use a random thumbnail asset as placeholder
+                    Image(ThumbnailMapper.getRandomThumbnailAssetName())
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 40, height: 40)
+                        .foregroundColor(.gray.opacity(0.6))
                     
                     Text("Photo")
                         .font(.caption2)
@@ -543,8 +570,17 @@ struct ImageDetailView: View {
                                     isPresented = false
                                 }
                         } placeholder: {
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            ZStack {
+                                Rectangle()
+                                    .fill(Color.black.opacity(0.3))
+                                
+                                // Use a random thumbnail asset as placeholder
+                                Image(ThumbnailMapper.getRandomThumbnailAssetName())
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(maxWidth: 120, maxHeight: 120)
+                                    .foregroundColor(.white.opacity(0.6))
+                            }
                         }
                     }
                     .tag(index)

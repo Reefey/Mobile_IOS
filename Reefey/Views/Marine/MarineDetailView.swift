@@ -47,25 +47,22 @@ struct MarineDetailView: View {
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                 } placeholder: {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.gray.opacity(0.3))
-                        .overlay(
-                            Image(systemName: "fish")
-                                .font(.system(size: 60))
-                                .foregroundColor(.gray)
-                        )
+                    // Use thumbnail asset as placeholder
+                    let assetName = ThumbnailMapper.getThumbnailAssetName(for: species.scientificName) ?? ThumbnailMapper.getRandomThumbnailAssetName()
+                    Image(assetName)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
                 }
                 .frame(height: 250)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             } else {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.gray.opacity(0.3))
+                // Use thumbnail asset when no image URL
+                let assetName = ThumbnailMapper.getThumbnailAssetName(for: species.scientificName) ?? ThumbnailMapper.getRandomThumbnailAssetName()
+                Image(assetName)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
                     .frame(height: 250)
-                    .overlay(
-                        Image(systemName: "fish")
-                            .font(.system(size: 60))
-                            .foregroundColor(.gray)
-                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
             }
         }
     }
