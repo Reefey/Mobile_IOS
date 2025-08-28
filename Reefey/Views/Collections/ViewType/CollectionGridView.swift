@@ -107,50 +107,35 @@ struct CollectionGridItem: View {
             VStack(spacing: 0) {
                 // Collection Image
                 ZStack {
-                    if let imageURL = collection.marineImageUrl {
+                    if collection.inUserCollection == false {
+                        // Show thumbnail assets first when no user collection
+                        if let scientificName = collection.scientificName,
+                           let thumbnailAssetName = ThumbnailMapper.getThumbnailAssetName(for: scientificName) {
+                            Image(thumbnailAssetName)
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                        } else {
+                            Image(ThumbnailMapper.getRandomThumbnailAssetName())
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                        }
+                    } else if let imageURL = collection.marineImageUrl {
+                        // Show actual user photos only if user has collection
                         AsyncImage(url: URL(string: imageURL)) { image in
                             image
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
                         } placeholder: {
-                            // Use thumbnail asset as placeholder only if not in user collection
-                            if collection.inUserCollection == false {
-                                if let scientificName = collection.scientificName,
-                                   let thumbnailAssetName = ThumbnailMapper.getThumbnailAssetName(for: scientificName) {
-                                    Image(thumbnailAssetName)
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fill)
-                                } else {
-                                    Image(ThumbnailMapper.getRandomThumbnailAssetName())
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fill)
-                                }
-                            } else {
-                                // Use generic placeholder for user collections
-                                Image("Barramundi")
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                            }
-                        }
-                    } else {
-                        // Use thumbnail asset when no image URL only if not in user collection
-                        if collection.inUserCollection == false {
-                            if let scientificName = collection.scientificName,
-                               let thumbnailAssetName = ThumbnailMapper.getThumbnailAssetName(for: scientificName) {
-                                Image(thumbnailAssetName)
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                            } else {
-                                Image(ThumbnailMapper.getRandomThumbnailAssetName())
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                            }
-                        } else {
                             // Use generic placeholder for user collections
                             Image("Barramundi")
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
                         }
+                    } else {
+                        // Fallback for user collections without image URL
+                        Image("Barramundi")
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
                     }
                 }
                 .frame(height: 120)
