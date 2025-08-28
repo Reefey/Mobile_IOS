@@ -27,8 +27,11 @@ struct CollectionListView: View {
                 Spacer()
                 
                 VStack(spacing: 16) {
-                    Image(systemName: "fish.fill")
-                        .font(.system(size: 64))
+                    // Use a random thumbnail asset for empty state
+                    Image(ThumbnailMapper.getRandomThumbnailAssetName())
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 80, height: 80)
                         .foregroundColor(.gray.opacity(0.6))
                     
                     VStack(spacing: 8) {
@@ -101,14 +104,44 @@ struct CollectionListItem: View {
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
                         } placeholder: {
+                            // Use thumbnail asset as placeholder only if not in user collection
+                            if collection.inUserCollection == false {
+                                if let scientificName = collection.scientificName,
+                                   let thumbnailAssetName = ThumbnailMapper.getThumbnailAssetName(for: scientificName) {
+                                    Image(thumbnailAssetName)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                } else {
+                                    Image(ThumbnailMapper.getRandomThumbnailAssetName())
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                }
+                            } else {
+                                // Use generic placeholder for user collections
+                                Image("Barramundi")
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                            }
+                        }
+                    } else {
+                        // Use thumbnail asset when no image URL only if not in user collection
+                        if collection.inUserCollection == false {
+                            if let scientificName = collection.scientificName,
+                               let thumbnailAssetName = ThumbnailMapper.getThumbnailAssetName(for: scientificName) {
+                                Image(thumbnailAssetName)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                            } else {
+                                Image(ThumbnailMapper.getRandomThumbnailAssetName())
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                            }
+                        } else {
+                            // Use generic placeholder for user collections
                             Image("Barramundi")
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
                         }
-                    } else {
-                        Image("Barramundi")
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
                     }
                 }
                 .frame(width: 120, height: 118)

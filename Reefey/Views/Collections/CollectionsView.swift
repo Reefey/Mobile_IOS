@@ -229,9 +229,12 @@ struct CollectionsView : View {
             Spacer()
             
             VStack(spacing: 16) {
-                Image(systemName: "fish.fill")
-                    .font(.system(size: 64))
-                    .foregroundColor(.gray)
+                // Use a random thumbnail asset for empty state
+                Image(ThumbnailMapper.getRandomThumbnailAssetName())
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 80, height: 80)
+                    .foregroundColor(.gray.opacity(0.6))
                 
                 Text("No Collections Yet")
                     .font(.title2)
