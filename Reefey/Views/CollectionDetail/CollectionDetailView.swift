@@ -157,7 +157,9 @@ struct CollectionDetailView: View {
                 )
             )
             .overlay(
-                Image(systemName: "fish.fill")
+                Image("AnimalCard_Miscellaneous")
+                    .resizable()
+                    .scaledToFill()
                     .font(.system(size: 60))
                     .foregroundColor(.white.opacity(0.6))
             )
