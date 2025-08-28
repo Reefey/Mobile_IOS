@@ -27,8 +27,10 @@ struct CollectionListView: View {
                 Spacer()
                 
                 VStack(spacing: 16) {
-                    Image(systemName: "fish.fill")
-                        .font(.system(size: 64))
+                    Image(ThumbnailMapper.getRandomThumbnailAssetName())
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 80, height: 80)
                         .foregroundColor(.gray.opacity(0.6))
                     
                     VStack(spacing: 8) {
@@ -95,16 +97,27 @@ struct CollectionListItem: View {
             HStack(alignment: .top, spacing: 20) {
                 // Collection Image
                 ZStack {
-                    if let imageURL = collection.marineImageUrl {
-                        AsyncImage(url: URL(string: imageURL)) { image in
-                            image
+                    if collection.inUserCollection == false {
+                        // Show thumbnail assets first when no user collection
+                        if let scientificName = collection.scientificName,
+                           let thumbnailAssetName = ThumbnailMapper.getThumbnailAssetName(for: scientificName) {
+                            Image(thumbnailAssetName)
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
-                        } placeholder: {
-                            Image("Barramundi")
+                        } else {
+                            Image(ThumbnailMapper.getRandomThumbnailAssetName())
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
                         }
+                    } else if let imageURL = collection.marineImageUrl {                        AsyncImage(url: URL(string: imageURL)) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } placeholder: {
+                        Image("Barramundi")
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    }
                     } else {
                         Image("Barramundi")
                             .resizable()

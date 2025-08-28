@@ -157,12 +157,12 @@ struct CollectionsView : View {
         .toolbar {
             ToolbarItemGroup(placement: .navigationBarTrailing) {
                 // Debug button
-//                Button {
-//                    showDebugView = true
-//                } label: {
-//                    Image(systemName: "ladybug")
-//                        .foregroundColor(.orange)
-//                }
+                //                Button {
+                //                    showDebugView = true
+                //                } label: {
+                //                    Image(systemName: "ladybug")
+                //                        .foregroundColor(.orange)
+                //                }
                 
                 // View toggle button
                 Button {
@@ -171,12 +171,12 @@ struct CollectionsView : View {
                     Image(systemName: selectedView == .GRID ? "list.bullet" : "rectangle.grid.2x2")
                 }
                 
-//                // Filter button
-//                Button {
-//                    print("Filter tapped")
-//                } label: {
-//                    Image(systemName: "line.3.horizontal.decrease.circle")
-//                }
+                //                // Filter button
+                //                Button {
+                //                    print("Filter tapped")
+                //                } label: {
+                //                    Image(systemName: "line.3.horizontal.decrease.circle")
+                //                }
             }
             
             // Bottom bar item
@@ -235,9 +235,12 @@ struct CollectionsView : View {
             Spacer()
             
             VStack(spacing: 16) {
-                Image(systemName: "fish.fill")
-                    .font(.system(size: 64))
-                    .foregroundColor(.gray)
+                // Use a random thumbnail asset for empty state
+                Image(ThumbnailMapper.getRandomThumbnailAssetName())
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 80, height: 80)
+                    .foregroundColor(.gray.opacity(0.6))
                 
                 Text("No Collections Yet")
                     .font(.title2)
