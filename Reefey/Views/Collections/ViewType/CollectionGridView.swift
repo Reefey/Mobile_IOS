@@ -153,9 +153,11 @@ struct CollectionGridItem: View {
             }
             .background(Color.gray.opacity(0.1))
             .cornerRadius(12)
+            .clipped()
         }
         .buttonStyle(PlainButtonStyle())
         .frame(height: 220)
+        .frame(maxWidth: .infinity)
     }
 }
 
