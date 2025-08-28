@@ -98,4 +98,9 @@ struct ThumbnailMapper {
         let assetNames = Array(scientificNameToThumbnail.values)
         return assetNames.randomElement() ?? "acanthaster_planci"
     }
+    
+    /// Returns the default thumbnail asset name when no specific thumbnail is available
+    static func getDefaultThumbnailAssetName() -> String {
+        return "Miscellaneous"
+    }
 }

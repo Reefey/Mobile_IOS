@@ -170,9 +170,11 @@ struct MarineListView: View {
     // MARK: - Empty State View
     private var emptyStateView: some View {
         VStack(spacing: 16) {
-            Image(systemName: "fish")
-                .font(.system(size: 60))
-                .foregroundColor(.gray)
+            Image(ThumbnailMapper.getDefaultThumbnailAssetName())
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 80, height: 80)
+                .foregroundColor(.gray.opacity(0.6))
             
             Text("No marine species found")
                 .font(.title2)
@@ -229,13 +231,20 @@ struct MarineSpeciesRow: View {
                     .frame(width: 60, height: 60)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                 } else {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(width: 60, height: 60)
-                        .overlay(
-                            Image(systemName: "fish")
-                                .foregroundColor(.gray)
-                        )
+                    // Use thumbnail asset based on scientific name, or default if not found
+                    if let thumbnailAssetName = ThumbnailMapper.getThumbnailAssetName(for: species.scientificName) {
+                        Image(thumbnailAssetName)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 60, height: 60)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                    } else {
+                        Image(ThumbnailMapper.getDefaultThumbnailAssetName())
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 60, height: 60)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                    }
                 }
                 
                 // Content
