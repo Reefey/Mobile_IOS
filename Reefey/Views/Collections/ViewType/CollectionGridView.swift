@@ -141,13 +141,6 @@ struct CollectionGridItem: View {
                     
                     // Rarity indicators
                     HStack(spacing: 3) {
-                        ForEach(1...5, id: \.self) { rarity in
-                            Image(systemName: "circle.fill")
-                                .resizable()
-                                .scaledToFit()
-                                .foregroundStyle(rarity <= (collection.rarity ?? 0) ? Color.blue : Color.gray.opacity(0.3))
-                                .frame(width: 12, height: 12)
-                        }
                         
                         Spacer()
                         

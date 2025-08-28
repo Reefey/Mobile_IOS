@@ -40,7 +40,7 @@ struct DataDialogView: View {
                 // Content section with teal background extending to edges
                 VStack(spacing: 16) {
                     Text(marineData.name)
-                        .font(.largeTitle)
+                        .font(.title)
                         .fontWeight(.medium)
                         .foregroundColor(.white)
                     

@@ -147,11 +147,7 @@ struct CollectionsView : View {
                 await viewModel.searchCollections()
             }
         }
-        .navigationTitle(
-            Text("Collections")
-                .italic()
-//                .font(.custom("EBGaramond-Regular", size: 24))
-        )
+        .navigationTitle("Collections")
         .sheet(isPresented: $cameraShow){
             CameraView(path: $path, cameraShow: $cameraShow)
         }

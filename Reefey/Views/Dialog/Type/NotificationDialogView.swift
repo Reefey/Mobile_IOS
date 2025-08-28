@@ -31,14 +31,15 @@ struct NotificationDialogView: View {
                             }
                         }
                     Text(identifyDialogData.title)
+                        .font(.custom("EBGaramond-Regular", size: 24, relativeTo: .body))
                         .font(.title)
                         .fontWeight(.bold)
-                        .padding(.bottom, 20)
+                        .padding(.bottom, 5)
                         .foregroundColor(Color(hex: "#145B55"))
                     if identifyDialogData.isShowBody {
                         Text(identifyDialogData.body)
-                            .font(.title3)
                             .padding(.bottom, 20)
+                            .multilineTextAlignment(.center)
                             .foregroundColor(Color(hex: "#145B55"))
                     }
                     

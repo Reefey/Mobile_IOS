@@ -123,7 +123,7 @@ struct CollectionListItem: View {
                 VStack(alignment: .leading) {
                     // Title
                     Text(collection.species)
-                        .font(.title2)
+                        .font(.title3)
                         .foregroundColor(.primary)
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
