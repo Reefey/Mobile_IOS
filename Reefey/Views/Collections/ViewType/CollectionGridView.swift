@@ -104,20 +104,18 @@ struct CollectionGridItem: View {
             VStack(spacing: 0) {
                 // Collection Image
                 ZStack {
-                    if let imageURL = collection.marineImageUrl {
-                        AsyncImage(url: URL(string: imageURL)) { image in
+                    if collection.inUserCollection == true && collection.marineImageUrl != nil {
+                        // Show user's image if in collection and has imageUrl
+                        AsyncImage(url: URL(string: collection.marineImageUrl!)) { image in
                             image
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
                         } placeholder: {
-                            Image("Barramundi")
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
+                            placeholderImage
                         }
                     } else {
-                        Image("Barramundi")
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
+                        // Show Supabase thumbnail for items not in user collection or without imageUrl
+                        placeholderImage
                     }
                 }
                 .frame(height: 120)
@@ -163,6 +161,36 @@ struct CollectionGridItem: View {
         }
         .buttonStyle(PlainButtonStyle())
         .frame(height: 220)
+    }
+    
+    // MARK: - Helper Views
+    private var placeholderImage: some View {
+        Group {
+            if collection.inUserCollection == true {
+                // Show Barramundi placeholder for items in user collection
+                Image("Barramundi")
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } else {
+                // Show Supabase thumbnail for items not in user collection
+                AsyncImage(url: URL(string: generateThumbnailURL())) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    Image("Barramundi")
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                }
+            }
+        }
+    }
+    
+    // MARK: - Helper Functions
+    private func generateThumbnailURL() -> String {
+        let baseURL = "https://puntbmozbsbdzgrjotxt.supabase.co/storage/v1/object/public/reefey-photos/thumbnail/"
+        let speciesName = collection.species.lowercased().replacingOccurrences(of: " ", with: "_")
+        return "\(baseURL)\(speciesName).svg"
     }
 }
 

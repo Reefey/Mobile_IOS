@@ -23,6 +23,10 @@ struct MarineSpecies: Identifiable, Codable, Hashable {
     let funFact: String?
     let foundAtSpots: [MarineSpot]?
     let totalSpots: Int?
+    let edibility: Bool?
+    let poisonous: Bool?
+    let endangeredd: Bool?
+    let inUserCollection: Bool?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -46,6 +50,10 @@ struct MarineSpecies: Identifiable, Codable, Hashable {
         case funFact
         case foundAtSpots
         case totalSpots
+        case edibility
+        case poisonous
+        case endangeredd
+        case inUserCollection
     }
 }
 
@@ -182,6 +190,9 @@ struct CreateMarineRequest: Codable {
     let migration: String?
     let endangered: String?
     let funFact: String?
+    let edibility: Bool?
+    let poisonous: Bool?
+    let endangeredd: Bool?
     
     enum CodingKeys: String, CodingKey {
         case name
@@ -201,5 +212,8 @@ struct CreateMarineRequest: Codable {
         case migration
         case endangered
         case funFact
+        case edibility
+        case poisonous
+        case endangeredd
     }
 }

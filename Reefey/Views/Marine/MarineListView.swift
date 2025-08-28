@@ -213,30 +213,23 @@ struct MarineSpeciesRow: View {
         NavigationLink(destination: MarineDetailView(species: species)) {
             HStack(spacing: 12) {
                 // Image or Placeholder
-                if let imageURL = species.imageUrl {
-                    AsyncImage(url: URL(string: imageURL)) { image in
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                    } placeholder: {
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.gray.opacity(0.3))
-                            .overlay(
-                                Image(systemName: "fish")
-                                    .foregroundColor(.gray)
-                            )
+                Group {
+                    if species.inUserCollection == true && species.imageUrl != nil {
+                        // Show user's image if in collection and has imageUrl
+                        AsyncImage(url: URL(string: species.imageUrl!)) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                        } placeholder: {
+                            placeholderImage
+                        }
+                    } else {
+                        // Show Supabase thumbnail for items not in user collection or without imageUrl
+                        placeholderImage
                     }
-                    .frame(width: 60, height: 60)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                } else {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(width: 60, height: 60)
-                        .overlay(
-                            Image(systemName: "fish")
-                                .foregroundColor(.gray)
-                        )
                 }
+                .frame(width: 60, height: 60)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
                 
                 // Content
                 VStack(alignment: .leading, spacing: 4) {
@@ -293,6 +286,39 @@ struct MarineSpeciesRow: View {
             }
             .padding(.vertical, 4)
         }
+    }
+    
+    // MARK: - Helper Views
+    private var placeholderImage: some View {
+        Group {
+            if species.inUserCollection == true {
+                // Show Barramundi placeholder for items in user collection
+                Image("Barramundi")
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } else {
+                // Show Supabase thumbnail for items not in user collection
+                AsyncImage(url: URL(string: generateThumbnailURL())) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.gray.opacity(0.3))
+                        .overlay(
+                            Image(systemName: "fish")
+                                .foregroundColor(.gray)
+                        )
+                }
+            }
+        }
+    }
+    
+    // MARK: - Helper Functions
+    private func generateThumbnailURL() -> String {
+        let baseURL = "https://puntbmozbsbdzgrjotxt.supabase.co/storage/v1/object/public/reefey-photos/thumbnail/"
+        let speciesName = species.name.lowercased().replacingOccurrences(of: " ", with: "_")
+        return "\(baseURL)\(speciesName).svg"
     }
     
     private func rarityColor(for rarity: Int) -> Color {

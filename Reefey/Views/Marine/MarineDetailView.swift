@@ -10,6 +10,9 @@ struct MarineDetailView: View {
                 // Header Image
                 headerImage
                 
+                // Danger Icons
+                dangerIconsSection
+                
                 // Basic Info
                 basicInfoSection
                 
@@ -67,6 +70,61 @@ struct MarineDetailView: View {
                             .foregroundColor(.gray)
                     )
             }
+        }
+    }
+    
+    // MARK: - Danger Icons Section
+    private var dangerIconsSection: some View {
+        HStack(spacing: 16) {
+            // Edible icon (fork and knife)
+            if species.edibility ?? false {
+                ZStack {
+                    Circle()
+                        .fill(Color.green)
+                        .frame(width: 40, height: 40)
+                    Image("Edible")
+                        .foregroundColor(.white)
+                        .font(.system(size: 18))
+                }
+            }
+            
+            // Warning icon (hand with lines)
+            if species.venomous {
+                ZStack {
+                    Circle()
+                        .fill(Color.orange)
+                        .frame(width: 40, height: 40)
+                    Image("Venomous")
+                        .foregroundColor(.white)
+                        .font(.system(size: 18))
+                }
+            }
+            
+            // Poisonous icon (skull and crossbones)
+            if species.poisonous ?? false {
+                ZStack {
+                    Circle()
+                        .fill(Color.purple)
+                        .frame(width: 40, height: 40)
+                    Image("Poisonous")
+                        .foregroundColor(.white)
+                        .font(.system(size: 18))
+                }
+            }
+            
+            // Endangered icon (crossed out fish)
+            if species.endangeredd ?? false {
+                ZStack {
+                    Circle()
+                        .fill(Color.red)
+                        .frame(width: 40, height: 40)
+                    Image("Endanged")
+                        .foregroundColor(.white)
+                        .font(.system(size: 18))
+                }
+            }
+            
+            Spacer()
         }
     }
     
@@ -219,6 +277,8 @@ struct InfoRow: View {
     }
 }
 
+
+
 // MARK: - Spot Card
 struct SpotCard: View {
     let spot: MarineSpot
@@ -270,7 +330,7 @@ struct SpotCard: View {
             diet: "Plankton, small inverts, algae",
             behavior: "Social",
             danger: "Low",
-            venomous: false,
+            venomous: true,
             description: "The iconic clownfish, known for its bright orange color with white stripes.",
             imageUrl: nil,
             lifeSpan: "6-10 years",
@@ -286,7 +346,11 @@ struct SpotCard: View {
                     notes: "Found near anemones in shallow waters"
                 )
             ],
-            totalSpots: 1
+            totalSpots: 1,
+            edibility: true,
+            poisonous: true,
+            endangeredd: true,
+            inUserCollection: true
         ))
     }
 }
