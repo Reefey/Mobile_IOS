@@ -17,6 +17,7 @@ import os.log
 final class CameraViewModel: BaseCameraViewModel {
     private let networkService = NetworkService.shared
     private let deviceManager = DeviceManager.shared
+    private let aiService = AIService.shared
     
     // Callback for saving to SwiftData when AI fails
     var onAIFailure: ((String) -> Void)?
@@ -82,32 +83,6 @@ final class CameraViewModel: BaseCameraViewModel {
         }
     }
     
-    func sendToAI(pngImage: Data) async throws -> MarineData {
-        logEvent("Sending binary image data...", OSLog.ai)
-        logEvent("Making network request with deviceId: \(deviceManager.deviceId)...", OSLog.networking)
-        let base64String = pngImage.base64EncodedString().asJPGBaseURLString()
-        let response = try await networkService.analyzePhoto(deviceId: deviceManager.deviceId, photo: base64String)
-        
-        if response.success {
-            logEvent("AI Response: \(response.data.debugDescription)", OSLog.ai)
-            logEvent("Message: \(response.message ?? "No message")", OSLog.ai)
-            
-            // Check if we have identified species with marine data
-            if let data = response.data,
-               !data.collectionEntries.isEmpty,
-               let marineData = data.collectionEntries.first?.marineData {
-                // Species identified successfully
-                return marineData
-            } else {
-                // No species identified
-                throw NetworkError.custom("No species identified")
-            }
-        } else {
-            logEvent("AI Analysis failed: \(response.error ?? "Unknown error")", OSLog.ai)
-            throw NetworkError.custom(response.error ?? "AI analysis failed")
-        }
-    }
-    
     // Override template method to handle photo capture for direct AI analysis
     override func handlePhotoCapture(image: UIImage, imageData: Data, resizedImage: Data, existingAssetIdentifier: String? = nil) {
         // Use existing identifier for gallery images, or save to Photos for camera images
@@ -127,7 +102,7 @@ final class CameraViewModel: BaseCameraViewModel {
         // Send to AI (async call)
         Task {
             do {
-                let marineData = try await self.sendToAI(pngImage: resizedImage)
+                let marineData = try await aiService.sendToAI(pngImage: resizedImage)
                 logEvent("AI analysis successful", OSLog.ai)
                 await MainActor.run {
                     self.onAIIdentificationSuccess?(marineData, image)
