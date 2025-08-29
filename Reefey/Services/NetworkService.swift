@@ -4,7 +4,7 @@ import Foundation
 class NetworkService: @unchecked Sendable {
     static let shared = NetworkService()
     
-    private let baseURL = "https://586b5915665f.ngrok-free.app/api" // Real API base URL
+    private let baseURL = "https://reefey.ngide.in/api" // Real API base URL
     private let session: URLSession
     
     private init() {
