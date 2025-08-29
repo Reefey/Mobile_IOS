@@ -40,42 +40,41 @@ struct MarineDetailView: View {
     
     // MARK: - Header Image
     private var headerImage: some View {
-        Group {
-            if let imageURL = species.imageUrl {
-                AsyncImage(url: URL(string: imageURL)) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    // Use thumbnail asset as placeholder
-                    let assetName = ThumbnailMapper.getThumbnailAssetName(for: species.scientificName) ?? ThumbnailMapper.getDefaultThumbnailAssetName()
-                    Image(assetName)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.gray.opacity(0.3))
-                        .overlay(
-                            Image(systemName: "fish")
-                                .font(.system(size: 60))
-                                .foregroundColor(.gray)
-                        )
-                }
-                .frame(height: 250)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-            } else {
-                // Use thumbnail asset when no image URL
-                let assetName = ThumbnailMapper.getThumbnailAssetName(for: species.scientificName) ?? ThumbnailMapper.getRandomThumbnailAssetName()
-                Image(assetName)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(height: 250)
-                    .overlay(
-                        Image(systemName: "fish")
-                            .font(.system(size: 60))
-                            .foregroundColor(.gray)
-                    )
-            }
+        if let imageURL = species.imageUrl {
+            AnyView(asyncHeaderImage(url: imageURL))
+        } else {
+            AnyView(staticHeaderImage)
         }
+    }
+    
+    private func asyncHeaderImage(url: String) -> some View {
+        AsyncImage(url: URL(string: url)) { image in
+            image
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+        } placeholder: {
+            // Use thumbnail asset as placeholder
+            let assetName = ThumbnailMapper.getThumbnailAssetName(for: species.scientificName) ?? ThumbnailMapper.getDefaultThumbnailAssetName()
+            Image(assetName)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+        }
+        .frame(height: 250)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+    
+    private var staticHeaderImage: some View {
+        let assetName = ThumbnailMapper.getThumbnailAssetName(for: species.scientificName) ?? ThumbnailMapper.getDefaultThumbnailAssetName()
+        return Image(assetName)
+            .resizable()
+            .aspectRatio(contentMode: .fill)
+            .frame(height: 250)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay(
+                Image(systemName: "fish")
+                    .font(.system(size: 60))
+                    .foregroundColor(.gray)
+            )
     }
     
     // MARK: - Basic Info Section

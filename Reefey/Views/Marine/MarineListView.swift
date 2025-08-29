@@ -231,20 +231,13 @@ struct MarineSpeciesRow: View {
                     .frame(width: 60, height: 60)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                 } else {
-                    // Use thumbnail asset based on scientific name, or default if not found
-                    if let thumbnailAssetName = ThumbnailMapper.getThumbnailAssetName(for: species.scientificName) {
-                        Image(thumbnailAssetName)
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: 60, height: 60)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
-                    } else {
-                        Image(ThumbnailMapper.getDefaultThumbnailAssetName())
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: 60, height: 60)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
-                    }
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.gray.opacity(0.3))
+                        .frame(width: 60, height: 60)
+                        .overlay(
+                            Image(systemName: "fish")
+                                .foregroundColor(.gray)
+                        )
                 }
                 
                 // Content
