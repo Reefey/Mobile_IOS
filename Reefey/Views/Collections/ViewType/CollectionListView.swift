@@ -105,24 +105,30 @@ struct CollectionListItem: View {
                             Image(thumbnailAssetName)
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
                         } else {
                             Image(ThumbnailMapper.getDefaultThumbnailAssetName())
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
                         }
-                    } else if let imageURL = collection.marineImageUrl {                        AsyncImage(url: URL(string: imageURL)) { image in
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                    } placeholder: {
-                        Image("Barramundi")
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                    }
+                    } else if let imageURL = collection.marineImageUrl {
+                        AsyncImage(url: URL(string: imageURL)) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        } placeholder: {
+                            Image("Barramundi")
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        }
                     } else {
                         Image("Barramundi")
                             .resizable()
                             .aspectRatio(contentMode: .fill)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                 }
                 .frame(width: 120, height: 118)

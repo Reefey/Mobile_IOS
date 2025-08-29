@@ -114,29 +114,35 @@ struct CollectionGridItem: View {
                             Image(thumbnailAssetName)
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
                         } else {
                             Image(ThumbnailMapper.getDefaultThumbnailAssetName())
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
                         }
                     } else if let imageURL = collection.marineImageUrl {
                         AsyncImage(url: URL(string: imageURL)) { image in
                             image
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
                         } placeholder: {
                             Image("Barramundi")
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
                         }
                     } else {
                         Image("Barramundi")
                             .resizable()
                             .aspectRatio(contentMode: .fill)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                 }
                 .frame(height: 120)
                 .clipped()
+                .cornerRadius(12)
                 
                 // Collection Info
                 VStack(alignment: .leading, spacing: 8) {
@@ -156,7 +162,6 @@ struct CollectionGridItem: View {
                     
                     // Rarity indicators
                     HStack(spacing: 3) {
-                        
                         Spacer()
                         
                         Text("\(collection.totalPhotos ?? 0) photos")
